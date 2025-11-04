@@ -1,77 +1,53 @@
-<section class="min-h-[100svh] px-4 py-6 relative">
-  <!-- Back -->
-  <a routerLink="/pages/dashboard" class="back-btn">
-    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
-      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    Back
-  </a>
-
-  <div class="title-wrap">
-    <div class="title">{{ table()?.name || 'Table' }}</div>
-    <div class="sub">Rows (top)</div>
-    <div class="actions">
-      <button class="btn-ghost-enhance" (click)="openAddField()">Add field</button>
-      <button class="btn-primary-enhance">Open table</button>
+<!-- src/app/pages/table-view/table-view.html -->
+<section class="p-6 space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-xl font-semibold">Table #{{ tableId }}</h1>
+    <div class="space-x-2">
+      <button class="btn-primary" (click)="onAddField()">Add Field</button>
+      <button class="btn-primary" (click)="onAddRow()">Add Row</button>
     </div>
   </div>
 
-  <div class="glass rounded-3xl p-4 sm:p-6">
-    @if (loading()) {
-      <div class="py-12 text-center text-slate-500">Loading...</div>
-    } @else {
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm align-top">
-          <thead>
-            <tr>
-              @for (f of fields(); track f.columnId) {
-                <th class="px-3 py-2 text-left">
-                  {{ f.name }}
-                  @if (f.dataType === 'Lookup') { <span class="badge badge-blue">Lookup</span> }
-                  @if (f.dataType === 'Formula') { <span class="badge badge-green">Fx</span> }
-                </th>
-              }
-              <th class="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (r of rows(); track r.rowId) {
-              <tr>
-                @for (f of fields(); track f.columnId) {
-                  <td class="px-3 py-2">
-                    @if (f.dataType === 'Lookup') {
-                      <span class="text-blue-700">{{ r.cells[f.name] ?? '-' }}</span>
-                    } @else if (f.dataType === 'Formula') {
-                      <span class="text-emerald-700 font-mono">{{ r.cells[f.name] ?? '-' }}</span>
-                    } @else {
-                      <span>{{ r.cells[f.name] ?? '-' }}</span>
-                    }
-                  </td>
-                }
-                <td class="px-3 py-2 whitespace-nowrap text-right">
-                  <button class="btn-ghost-enhance mr-2">Duplicate</button>
-                  <button class="btn-ghost-enhance">Delete</button>
-                </td>
-              </tr>
-            }
-            @if (isEmpty()) {
-              <tr>
-                <td class="px-3 py-8 text-center text-slate-500" [attr.colspan]="fields().length + 1">
-                  No rows.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
+  <!-- ✅ แทนที่ทั้งบล็อก <table> เดิมด้วยคอนเทนเนอร์ของ Tabulator -->
+  <div class="table-wrap">
+    <div #tabGrid class="tabulator-container"></div>
   </div>
 
-  @if (showFieldDialog()) {
-    <app-field-dialog
-      [tableId]="tableId()"
-      [projectId]="projectId()"
-      (close)="closeAddField($event)">
-    </app-field-dialog>
-  }
+  <!-- รายชื่อฟิลด์ (คงเดิม) -->
+  <div class="mt-2">
+    <div class="text-slate-600 text-sm font-semibold mb-1">Fields</div>
+    <ul class="space-y-1">
+      @for (c of columns(); track c.columnId) {
+        <li class="flex justify-between text-sm">
+          <span>
+            {{ c.name }}
+            <small class="text-slate-400">({{ c.dataType }})</small>
+            @if (c.isPrimary) { <small class="text-slate-400">— PK</small> }
+            @if (c.dataType === 'Lookup')  { <small class="text-slate-400">— lookup</small> }
+            @if (c.dataType === 'Formula') { <small class="text-slate-400">— formula</small> }
+          </span>
+          <span class="flex gap-3">
+            <button class="link" (click)="onEditField(c)">Edit</button>
+            <button class="link link-danger" (click)="onDeleteField(c)">Delete</button>
+          </span>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <!-- dialogs (คงเดิม) -->
+  <ph-field-dialog
+    [open]="fieldOpen()"
+    [tableId]="tableId"
+    (save)="onSaveField($event)"
+    (cancel)="fieldOpen.set(false)">
+  </ph-field-dialog>
+
+  <ph-row-dialog
+    [open]="rowOpen()"
+    [columns]="columns()"
+    [initData]="editingRow ? parseData(editingRow.data) : null"
+    (save)="onSaveRow($event)"
+    (cancel)="rowOpen.set(false)">
+  </ph-row-dialog>
 </section>

@@ -1,85 +1,80 @@
-<div class="overlay">
-  <div class="dialog glass rounded-3xl p-5 sm:p-6">
+<div class="overlay" *ngIf="open">
+  <div class="dialog glass rounded-2xl p-5 max-w-2xl w-[92vw]">
     <div class="title">Add field</div>
 
-    <form class="space-y-4" (submit)="$event.preventDefault()">
+    <form (submit)="$event.preventDefault()" class="space-y-4">
       <div class="grid sm:grid-cols-2 gap-3">
         <div>
           <label class="label">Field name</label>
           <input class="input mt-1" [(ngModel)]="name" name="name" placeholder="e.g. ProductName" />
         </div>
+
         <div>
           <label class="label">Type</label>
-          <select class="input mt-1" [(ngModel)]="type" name="type">
+          <select class="input mt-1" [(ngModel)]="preset" name="preset" (change)="onPresetChange()">
+            <option value="Identifier">Identifier (Auto)</option>
             <option value="Text">Text</option>
             <option value="Number">Number</option>
-            <option value="YesNo">Yes/No</option>
+            <option value="Price">Price</option>
             <option value="Date">Date</option>
-            <option value="Lookup">Lookup</option>
+            <option value="YesNo">Yes / No</option>
+            <option value="ImageUrl">Image URL</option>
+            <option value="Lookup">Lookup (Relate)</option>
             <option value="Formula">Formula</option>
           </select>
         </div>
       </div>
 
-      <div class="grid sm:grid-cols-2 gap-3">
-        <label class="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" [(ngModel)]="isNullable" name="nullable" /> Nullable
-        </label>
-        <label class="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" [(ngModel)]="isPrimary" name="isPrimary" /> Primary key
-        </label>
-      </div>
-
-      @if (type === 'Lookup') {
-        <div class="divider">Lookup settings</div>
-
+      <!-- Lookup config -->
+      <ng-container *ngIf="preset === 'Lookup'">
+        <div class="divider">Lookup</div>
         <div class="grid sm:grid-cols-2 gap-3">
           <div>
             <label class="label">Target table</label>
             <select class="input mt-1" [(ngModel)]="targetTableId" name="targetTableId" (change)="onSelectTargetTable()">
               <option [ngValue]="null">— Select —</option>
-              @for (t of tables(); track t.tableId) {
-                <option [ngValue]="t.tableId">{{ t.name }}</option>
-              }
+              <option *ngFor="let t of tables()" [ngValue]="t.tableId">{{ t.name }}</option>
             </select>
           </div>
           <div>
             <label class="label">Target column</label>
             <select class="input mt-1" [(ngModel)]="targetColumnId" name="targetColumnId">
               <option [ngValue]="null">— Select —</option>
-              @for (c of targetTableFields(); track c.columnId) {
-                <option [ngValue]="c.columnId">{{ c.name }}</option>
-              }
+              <option *ngFor="let c of targetCols()" [ngValue]="c.columnId">{{ c.name }}</option>
             </select>
           </div>
         </div>
+      </ng-container>
 
-        <div>
-          <label class="label">This table FK column name</label>
-          <input class="input mt-1" [(ngModel)]="fkColumnName" name="fk" placeholder="e.g. ProductId" />
-          <div class="hint">
-            หมายเหตุ: ตอนผูกจริงให้ส่งเป็น <b>ColumnId</b> ของฝั่งนี้ (ไม่ใช่ชื่อ)
+      <!-- Formula config -->
+      <ng-container *ngIf="preset === 'Formula'">
+        <div class="divider">Formula (JSON)</div>
+        <textarea class="input font-mono text-xs h-40" [(ngModel)]="formulaDefinition" name="formulaDefinition"
+          placeholder='เช่น {"type":"binary","+":[{"ref":"Price"},{"ref":"Qty"}]}'></textarea>
+        <div class="hint">เก็บเป็น JSON string ให้สอดคล้องกับ <code>FormulaTranslator</code> หลังบ้าน</div>
+      </ng-container>
+
+      <!-- Advanced -->
+      <details class="mt-2">
+        <summary class="cursor-pointer select-none text-sm text-slate-600">Advanced</summary>
+        <div class="grid sm:grid-cols-3 gap-3 mt-2">
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" [(ngModel)]="isPrimary" name="isPrimary" />
+            Use as identifier (PK)
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" [(ngModel)]="isNullable" name="isNullable" />
+            Allow empty value
+          </label>
+          <div class="text-xs text-slate-500 flex items-center">
+            Data type (backend): <code class="ml-1">{{ dataType }}</code>
           </div>
         </div>
-      }
-
-      @if (type === 'Formula') {
-        <div class="divider">Formula (JSON)</div>
-        <textarea class="input mt-1 font-mono text-xs h-36" [(ngModel)]="formulaRaw" name="formulaRaw"
-                  placeholder='เช่น {"type":"binary","+":[{"ref":"Price"},{"ref":"Qty"}]}'>
-        </textarea>
-        <div class="hint">เก็บเป็น JSON string ตามรูปแบบที่ <code>FormulaTranslator</code> ใช้</div>
-      }
-
-      @if (errorMsg()) {
-        <div class="error">{{ errorMsg() }}</div>
-      }
+      </details>
 
       <div class="flex gap-3 justify-end pt-2">
-        <button type="button" class="btn-ghost-enhance" (click)="cancel()">Cancel</button>
-        <button type="button" class="btn-primary-enhance" [disabled]="saving()" (click)="submit()">
-          @if (!saving()) { <span>Create field</span> } @else { <span>Saving...</span> }
-        </button>
+        <button class="btn-ghost-enhance" type="button" (click)="close()">Cancel</button>
+        <button class="btn-primary-enhance" type="button" (click)="submit()">Create field</button>
       </div>
     </form>
   </div>

@@ -1,0 +1,72 @@
+@if (open) {
+  <div class="overlay">
+    <div class="dialog glass rounded-3xl p-5 sm:p-6 w-[min(92vw,720px)]">
+      <div class="title mb-3">Row</div>
+
+      <form class="grid grid-cols-1 sm:grid-cols-2 gap-3" (submit)="$event.preventDefault()">
+        @for (c of columns; track c.name) {
+          <label class="text-xs font-medium text-slate-600">{{ c.name }}</label>
+
+          @switch ((c.dataType || '').toUpperCase()) {
+            @case ('INTEGER') {
+              <input
+                class="input"
+                type="number"
+                [(ngModel)]="model[c.name]"
+                [name]="c.name" />
+            }
+
+            @case ('REAL') {
+              <input
+                class="input"
+                type="number"
+                step="any"
+                [(ngModel)]="model[c.name]"
+                [name]="c.name" />
+            }
+
+            @case ('BOOLEAN') {
+              <label class="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="model[c.name]"
+                  [name]="c.name" />
+                <span class="text-xs text-slate-500">Yes</span>
+              </label>
+            }
+
+            @case ('LOOKUP') {
+              <input
+                class="input"
+                [disabled]="true"
+                [ngModel]="model[c.name]"
+                [name]="c.name" />
+            }
+
+            @case ('FORMULA') {
+              <input
+                class="input"
+                [disabled]="true"
+                [ngModel]="model[c.name]"
+                [name]="c.name" />
+            }
+
+            @default {
+              <textarea
+                class="input"
+                rows="2"
+                [(ngModel)]="model[c.name]"
+                [name]="c.name">
+              </textarea>
+            }
+          }
+        }
+
+        <div class="col-span-full flex justify-end gap-2 pt-3">
+          <button type="button" class="btn-ghost-enhance" (click)="onCancel()">Cancel</button>
+          <button type="button" class="btn-primary-enhance" (click)="onSubmit()">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

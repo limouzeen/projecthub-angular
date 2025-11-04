@@ -1,101 +1,134 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal, inject, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import {
-  TablesApiService,
-  UiTable,
-  UiField,
-  CreateFieldDto,
-} from '../../../core/tables-api.service';
+  TableViewService,
+  FieldDialogModel,
+  TableListItem,
+  ColumnListItem,
+} from '../table-view.service';
 
-type FieldType = 'Text' | 'Number' | 'YesNo' | 'Date' | 'Lookup' | 'Formula';
+type Preset =
+  | 'Identifier'   // PK auto, not null, INTEGER
+  | 'Text'
+  | 'Number'
+  | 'Price'
+  | 'Date'
+  | 'YesNo'
+  | 'ImageUrl'
+  | 'Lookup'
+  | 'Formula';
 
 @Component({
-  selector: 'app-field-dialog',
+  selector: 'ph-field-dialog',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './field-dialog.html',
   styleUrls: ['./field-dialog.css'],
 })
-export class FieldDialog implements OnInit {
-  private readonly api = inject(TablesApiService);
-
+export class FieldDialog implements OnChanges {
+  @Input() open = false;
   @Input({ required: true }) tableId!: number;
-  @Input({ required: true }) projectId!: number;
-  @Output() close = new EventEmitter<boolean>();
+  @Output() save = new EventEmitter<FieldDialogModel>();
+  @Output() cancel = new EventEmitter<void>();
 
-  // form state
+  private readonly api = inject(TableViewService);
+
+  // form
   name = '';
-  type: FieldType = 'Text';
+  preset: Preset = 'Text';
+
+  // technical (ซ่อนไว้ใน Advanced; จะถูกเติมอัตโนมัติจาก preset)
   isNullable = true;
   isPrimary = false;
+  dataType: 'TEXT'|'INTEGER'|'REAL'|'BOOLEAN'|'STRING'|'IMAGE'|'LOOKUP'|'FORMULA' = 'TEXT';
 
-  // Lookup settings
-  targetTableId: number | null = null;
-  targetColumnId: number | null = null;
-  fkColumnName = ''; // ชื่อ FK ฝั่งนี้ เช่น ProductId
+  // lookup
+  targetTableId: number|null = null;
+  targetColumnId: number|null = null;
 
-  // Formula settings (เก็บเป็น raw JSON string ตามหลังบ้าน)
-  formulaRaw = '';
+  // formula
+  formulaDefinition = ''; // JSON string
 
   // lists
-  readonly tables = signal<UiTable[]>([]);
-  readonly targetTableFields = signal<UiField[]>([]);
-  readonly saving = signal(false);
-  readonly errorMsg = signal('');
+  readonly tables = signal<TableListItem[]>([]);
+  readonly targetCols = signal<ColumnListItem[]>([]);
+  readonly showAdvanced = signal(false);
 
-  async ngOnInit() {
-    // โหลดตารางในโปรเจกต์นี้ สำหรับให้เลือกเป็นปลายทางของ Lookup
-    const tabs = await this.api.listTablesByProject(this.projectId);
-    this.tables.set(tabs);
+  async ngOnChanges() {
+    if (!this.open) return;
+    const tabs = (await firstValueFrom(this.api.listTables())) ?? [];
+this.tables.set(tabs);
+
+    this.applyPreset(); // ตั้งค่าตาม preset ตอนเปิด
+  }
+
+  onPresetChange() {
+    this.applyPreset();
+  }
+
+  private applyPreset() {
+    // default
+    this.isPrimary = false;
+    this.isNullable = true;
+
+    switch (this.preset) {
+      case 'Identifier':
+        this.dataType = 'INTEGER';
+        this.isPrimary = true;
+        this.isNullable = false;
+        break;
+      case 'Text':
+        this.dataType = 'TEXT';
+        break;
+      case 'Number':
+        this.dataType = 'REAL';
+        break;
+      case 'Price':
+        this.dataType = 'REAL';
+        break;
+      case 'Date':
+        // เก็บเป็น STRING (ISO) หรือ TEXT ตามที่หลังบ้านรองรับ
+        this.dataType = 'STRING';
+        break;
+      case 'YesNo':
+        this.dataType = 'BOOLEAN';
+        break;
+      case 'ImageUrl':
+        this.dataType = 'IMAGE';
+        break;
+      case 'Lookup':
+        this.dataType = 'LOOKUP';
+        break;
+      case 'Formula':
+        this.dataType = 'FORMULA';
+        break;
+    }
   }
 
   async onSelectTargetTable() {
-    if (!this.targetTableId) { this.targetTableFields.set([]); return; }
-    const cols = await this.api.listColumnsByTableId(this.targetTableId);
-    this.targetTableFields.set(cols);
+    if (!this.targetTableId) { this.targetCols.set([]); return; }
+    const cols = (await firstValueFrom(this.api.listColumnsLite(this.targetTableId))) ?? [];
+this.targetCols.set(cols);
+
   }
 
-  async submit() {
-    this.errorMsg.set('');
-    if (!this.name.trim()) { this.errorMsg.set('Field name is required.'); return; }
-
-    const dto: CreateFieldDto = {
-      tableId: this.tableId,
+  submit() {
+    const model: FieldDialogModel = {
       name: this.name.trim(),
-      dataType: this.type,
+      // ส่งชนิดที่ Validator ฝั่งหลังบ้านเข้าใจ
+      dataType: this.dataType,
       isNullable: this.isNullable,
       isPrimary: this.isPrimary,
+      // lookup
+      targetTableId: this.preset === 'Lookup' ? this.targetTableId : null,
+      targetColumnId: this.preset === 'Lookup' ? this.targetColumnId : null,
+      // formula
+      formulaDefinition: this.preset === 'Formula' ? (this.formulaDefinition || null) : null,
     };
-
-    if (this.type === 'Lookup') {
-      if (!this.targetTableId || !this.targetColumnId || !this.fkColumnName.trim()) {
-        this.errorMsg.set('Please fill all lookup settings.'); return;
-      }
-      dto.primaryTableId  = this.targetTableId;         // ตารางปลายทาง (PK)
-      dto.primaryColumnId = this.targetColumnId;        // คอลัมน์ปลายทาง
-      dto.foreignTableId  = this.tableId;               // ตารางฝั่งนี้
-      // หมายเหตุ: ฝั่งหลังบ้านของคุณเก็บ FK คอลัมน์เป็น Columns entity เช่นกัน
-      // ใน mock นี้เราส่งชื่อไว้เฉย ๆ; ผูกจริงให้แก้ส่งเป็น ColumnId ของฝั่งนี้แทน
-      // (หรือใช้ API สร้าง Column FK ก่อน แล้วสร้าง Relationship)
-      dto.foreignColumnId = 0; // TODO: เมื่อผูกจริงให้ใส่ columnId ของ FK ฝั่งนี้
-      dto.targetColumnId  = this.targetColumnId;        // คอลัมน์ที่อยากดึงมาแสดง
-    }
-
-    if (this.type === 'Formula') {
-      dto.formulaDefinition = this.formulaRaw || null;  // เก็บ JSON string ตามหลังบ้าน
-    }
-
-    try {
-      this.saving.set(true);
-      await this.api.createField(dto);
-      this.close.emit(true);
-    } catch (e: any) {
-      this.errorMsg.set(e?.message || 'Create field failed.');
-    } finally {
-      this.saving.set(false);
-    }
+    this.save.emit(model);
   }
 
-  cancel() { this.close.emit(false); }
+  close() { this.cancel.emit(); }
 }

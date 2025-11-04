@@ -1,0 +1,29 @@
+<div class="img-cell resizable" tabindex="0">
+
+    <!-- รูปภาพ -->
+    
+  @if (previewUrl) {
+  <img [src]="previewUrl" alt="image" />
+} @else {
+  <div class="placeholder">IMG</div>
+}
+
+
+  <!-- ปุ่มอัปโหลด (ไอคอนรูปภาพ) -->
+  <button
+    class="upload-btn"
+    type="button"
+    (click)="fileEl.click()"
+    title="Upload image"
+    aria-label="Upload image">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14m18 0H3m18 0-4-6-3 4-2-3-4 5"
+            fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+    </svg>
+  </button>
+
+  <!-- input ไฟล์ (ซ่อน) -->
+  <input #fileEl type="file" accept="image/*" (change)="onFile($event)" hidden />
+</div>
