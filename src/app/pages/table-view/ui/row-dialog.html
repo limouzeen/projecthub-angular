@@ -8,13 +8,14 @@
           <label class="text-xs font-medium text-slate-600">{{ c.name }}</label>
 
           @switch ((c.dataType || '').toUpperCase()) {
+
             @case ('INTEGER') {
               <input
                 class="input"
                 type="number"
                 [(ngModel)]="model[c.name]"
                 [name]="c.name"
-                [disabled]="!!c.isPrimary">
+                [disabled]="!!c.isPrimary" />
             }
 
             @case ('REAL') {
@@ -23,19 +24,68 @@
                 type="number"
                 step="any"
                 [(ngModel)]="model[c.name]"
-                [name]="c.name" 
-                [disabled]="!!c.isPrimary">
+                [name]="c.name"
+                [disabled]="!!c.isPrimary" />
             }
 
             @case ('BOOLEAN') {
-              <label class="inline-flex items-center gap-2">
+              <div class="flex items-center gap-6">
+                <label class="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    [name]="c.name + '_bool'"
+                    [value]="true"
+                    [(ngModel)]="model[c.name]"
+                    [disabled]="!!c.isPrimary" />
+                  <span class="text-xs text-slate-500">Yes</span>
+                </label>
+
+                <label class="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    [name]="c.name + '_bool'"
+                    [value]="false"
+                    [(ngModel)]="model[c.name]"
+                    [disabled]="!!c.isPrimary" />
+                  <span class="text-xs text-slate-500">No</span>
+                </label>
+              </div>
+            }
+
+            @case ('IMAGE') {
+              <div class="space-y-2">
+                <!-- preview -->
+                <div class="img-pv">
+                  @if (model[c.name]) {
+                    <img [src]="model[c.name]" alt="" />
+                  } @else {
+                    <div class="img-empty">No image</div>
+                  }
+                </div>
+
+                <!-- upload -->
+                <div class="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    (change)="onFileChange($event, c.name)"
+                    [disabled]="!!c.isPrimary" />
+
+                  <button type="button" class="btn-ghost" (click)="model[c.name]=''" [disabled]="!!c.isPrimary">
+                    Clear
+                  </button>
+
+                  <span class="text-xs text-slate-500">or</span>
+                </div>
+
+                <!-- paste URL -->
                 <input
-                  type="checkbox"
+                  class="input"
+                  placeholder="Paste image URL…"
                   [(ngModel)]="model[c.name]"
-                  [name]="c.name" 
-                  [disabled]="!!c.isPrimary">
-                <span class="text-xs text-slate-500">Yes</span>
-              </label>
+                  [name]="c.name"
+                  [disabled]="!!c.isPrimary" />
+              </div>
             }
 
             @case ('LOOKUP') {
