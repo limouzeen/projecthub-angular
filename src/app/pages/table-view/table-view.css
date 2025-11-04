@@ -1,11 +1,33 @@
-/* ขนาดพื้นที่กริด */
-.tabulator-container {
-  height: 560px;        /* ปรับได้ตามต้องการ */
+/* ให้กรอบกว้างเต็ม */
+.grid-wrap { width: 100%; }
+
+/* บังคับ Tabulator ให้กว้างเต็ม parent */
+:host ::ng-deep .tabulator,
+:host ::ng-deep .tabulator .tabulator-tableholder,
+:host ::ng-deep .tabulator .tabulator-table {
+  width: 100% !important;
 }
 
-/* ให้กล่องครอบไม่แทรกสกรอลล์ซ้อน */
-.table-wrap {
-  overflow: hidden;
+/* จัดกลาง "ทุกเซลล์" ทั้งแนวตั้ง/แนวนอน (กันเคสที่ hozAlign โดน style อื่นทับ) */
+:host ::ng-deep .tabulator .tabulator-row .tabulator-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center !important;
+  padding: 0.5rem !important;
 }
 
+/* จัดกลางหัวคอลัมน์ด้วย */
+:host ::ng-deep .tabulator .tabulator-header .tabulator-col .tabulator-col-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center !important;
+}
 
+/* ไม่มีคอลัมน์ตรึงแล้ว พื้นที่ขวาจะไม่เกิด
+   แต่กันไว้: ไม่ให้เกิดแถบ/พื้นที่เลื่อนประหลาด */
+:host ::ng-deep .tabulator .tabulator-tableholder {
+  overflow-x: auto;
+  overflow-y: hidden;
+}

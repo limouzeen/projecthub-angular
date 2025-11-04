@@ -37,55 +37,73 @@ export class RowDialog implements OnChanges {
   /** แบบฟอร์มทำงานกับ ngModel */
   model: Record<string, any> = {};
 
+  // ==============================
+  // Lifecycle
+  // ==============================
   ngOnChanges(changes: SimpleChanges): void {
-    // เปิด dialog เมื่อ open=true และรีเฟรช model ทุกครั้งที่เปิด
-    if (this.open) {
-      // clone initData
-      this.model = { ...(this.initData ?? {}) };
+  if ((changes['open'] && this.open) || changes['initData']) {
+    this.model = { ...(this.initData ?? {}) };
 
-      // สร้าง key ให้ครบทุกคอลัมน์
-      for (const c of this.columns) {
-        if (!(c.name in this.model)) {
-          // ค่า default ตามชนิด
-          const t = (c.dataType || '').toUpperCase();
-          if (t === 'BOOLEAN') this.model[c.name] = false;
-          else this.model[c.name] = '';
-        }
+    for (const c of this.columns) {
+      // ✅ บรรทัดนี้สำคัญ: บังคับ undefined → false (กัน error ใน template)
+      c.isPrimary = !!c.isPrimary;
+
+      if (!(c.name in this.model)) {
+        const t = (c.dataType || '').toUpperCase();
+        this.model[c.name] = t === 'BOOLEAN' ? false : '';
       }
     }
   }
+}
 
-  /** แปลงค่าตามชนิดก่อนส่งกลับ (เช่น number/boolean) */
+  // ==============================
+  // Normalize ก่อน Save
+  // ==============================
   private normalizeBeforeSave(src: Record<string, any>): Record<string, any> {
     const out: Record<string, any> = {};
+
     for (const c of this.columns) {
       const key = c.name;
       const t = (c.dataType || '').toUpperCase();
-      const v = src[key];
+      let v = src[key];
 
-      if (v === '' || v === undefined) {
-        out[key] = null; // ส่ง null เพื่อให้ฝั่งหลังบ้านตรวจตาม Is_nullable
+      // ✅ ถ้าเป็น Primary Key → ใช้ค่าจาก initData (ห้ามแก้)
+      if (c.isPrimary) {
+        out[key] =
+          (this.initData && this.initData[key] !== undefined)
+            ? this.initData[key]
+            : (src[key] ?? null);
         continue;
       }
 
+      // ✅ ถ้าเป็นค่าว่าง → ส่ง null ให้ backend
+      if (v === '' || v === undefined) {
+        out[key] = null;
+        continue;
+      }
+
+      // ✅ แปลงตามชนิดข้อมูล
       switch (t) {
         case 'INTEGER':
-          out[key] = v === null ? null : Number.parseInt(v as any, 10);
+          out[key] = Number.parseInt(v as any, 10);
           break;
         case 'REAL':
-          out[key] = v === null ? null : Number.parseFloat(v as any);
+          out[key] = Number.parseFloat(v as any);
           break;
         case 'BOOLEAN':
           out[key] = !!v;
           break;
-        // LOOKUP/FORMULA เป็น read-only: ส่งค่ากลับตามที่มี (ปกติควรเพิกเฉยที่หลังบ้าน)
         default:
           out[key] = v;
       }
     }
+
     return out;
   }
 
+  // ==============================
+  // Actions
+  // ==============================
   /** กด Save */
   onSubmit(): void {
     const normalized = this.normalizeBeforeSave(this.model);
@@ -94,6 +112,8 @@ export class RowDialog implements OnChanges {
 
   /** กด Cancel */
   onCancel(): void {
+    // ✅ เคลียร์ model กันค่าค้างรอบหน้า
+    this.model = {};
     this.cancel.emit();
   }
 }

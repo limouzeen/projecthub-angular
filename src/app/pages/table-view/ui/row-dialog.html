@@ -13,7 +13,8 @@
                 class="input"
                 type="number"
                 [(ngModel)]="model[c.name]"
-                [name]="c.name" />
+                [name]="c.name"
+                [disabled]="!!c.isPrimary">
             }
 
             @case ('REAL') {
@@ -22,7 +23,8 @@
                 type="number"
                 step="any"
                 [(ngModel)]="model[c.name]"
-                [name]="c.name" />
+                [name]="c.name" 
+                [disabled]="!!c.isPrimary">
             }
 
             @case ('BOOLEAN') {
@@ -30,7 +32,8 @@
                 <input
                   type="checkbox"
                   [(ngModel)]="model[c.name]"
-                  [name]="c.name" />
+                  [name]="c.name" 
+                  [disabled]="!!c.isPrimary">
                 <span class="text-xs text-slate-500">Yes</span>
               </label>
             }
@@ -56,7 +59,8 @@
                 class="input"
                 rows="2"
                 [(ngModel)]="model[c.name]"
-                [name]="c.name">
+                [name]="c.name"
+                [disabled]="!!c.isPrimary">
               </textarea>
             }
           }
