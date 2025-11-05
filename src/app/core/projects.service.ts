@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 
 export type Project = {
-  id: number;                 // <-- number แทน string
+  id: number;                 // ใช้ number ให้ตรงกับฝั่ง .NET ง่าย ๆ
   name: string;
   updatedAt: string;          // ISO
   tables: number;
@@ -10,12 +10,16 @@ export type Project = {
 
 @Injectable({ providedIn: 'root' })
 export class ProjectsService {
-  // simple auto-increment id for mock
+  // ให้ seq สูงกว่าไอดีปัจจุบันเพื่อกันชนตอน add()
   private seq = 1003;
 
+  /**
+   * ✅ ปรับให้มีโปรเจกต์ id: 1 ตรงกับ mock ของ ProjectDetailService
+   *    เพื่อที่เวลาเปิด /projects/1 จะเห็นตาราง mock (Products, Orders) ทันที
+   */
   private readonly _list = signal<Project[]>([
-    { id: 1001, name: 'Marketing Campaign 2025', updatedAt: new Date().toISOString(), tables: 15, favorite: true },
-    { id: 1002, name: 'Sales Analytics',          updatedAt: new Date().toISOString(), tables:  8, favorite: false },
+    { id: 1,    name: 'Sales Analytics',          updatedAt: new Date().toISOString(), tables: 8,  favorite: false },
+    { id: 1002, name: 'Marketing Campaign 2025',  updatedAt: new Date().toISOString(), tables: 15, favorite: true  },
   ]);
 
   /** expose read-only signal */
