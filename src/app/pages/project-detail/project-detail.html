@@ -2,8 +2,18 @@
   <div class="flex items-center justify-between max-w-5xl mx-auto mb-4">
     <div class="text-xl font-semibold">Project tables</div>
     <div class="flex gap-2">
-      <input class="input w-56" placeholder="Filter tables..." [value]="q()" (input)="q.set($any($event.target).value)" />
-      <button class="btn-primary-enhance" (click)="createTable()" [disabled]="creating()">Create Table</button>
+      <input
+        class="input w-56"
+        placeholder="Filter tables..."
+        [value]="q()"
+        (input)="q.set($any($event.target).value)" />
+      <button
+        class="btn-primary-enhance"
+        (click)="createTable()
+        "
+        [disabled]="creating()">
+        @if (creating()) {Creating...} @else {Create Table}
+      </button>
     </div>
   </div>
 

@@ -7,7 +7,7 @@ import {
   FieldDialogModel,
   TableListItem,
   ColumnListItem,
-} from '../table-view.service';
+} from '../../../core/table-view.service';
 
 type Preset =
   | 'Identifier'   // PK auto, not null, INTEGER

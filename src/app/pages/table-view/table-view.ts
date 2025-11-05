@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { TabulatorFull as Tabulator } from 'tabulator-tables/dist/js/tabulator_esm.js';
 
-import { TableViewService, ColumnDto, RowDto } from './table-view.service';
+import { TableViewService, ColumnDto, RowDto } from '../../core/table-view.service';
 import { FieldDialog } from './ui/field-dialog';
 import { RowDialog } from './ui/row-dialog';
 
@@ -105,16 +105,9 @@ export class TableView implements OnInit, AfterViewInit {
       alert('Please add at least 1 field before adding a row.');
       return;
     }
-    const pk = this.columns().find((c) => c.isPrimary)?.name;
-    if (pk) {
-      firstValueFrom(this.api.nextRunningId(this.tableId, pk)).then((next) => {
-        this.rowInitData = { [pk]: next };
-        this.rowOpen.set(true);
-      });
-    } else {
-      this.rowInitData = null;
-      this.rowOpen.set(true);
-    }
+    // ✅ FE ไม่ต้อง generate running id แล้ว — ให้ BE/Mock จัดการ auto-increment
+    this.rowInitData = null;
+    this.rowOpen.set(true);
   }
 
   async onSaveRow(newObj: Record<string, any>) {
@@ -291,19 +284,18 @@ export class TableView implements OnInit, AfterViewInit {
   }
 
   /** แปลง RowDto[] -> records ที่ Tabulator ใช้ได้ */
-private buildDataForGridFromRows(rows: RowDto[]): any[] {
-  const cols = this.columns();
-  return rows.map(r => {
-    let obj: any = {};
-    try { obj = JSON.parse(r.data ?? '{}'); } catch {}
-    const rec: any = { __rowId: r.rowId };
-    for (const c of cols) {
-      rec[c.name] = obj?.[c.name] ?? null;
-    }
-    return rec;
-  });
-}
-
+  private buildDataForGridFromRows(rows: RowDto[]): any[] {
+    const cols = this.columns();
+    return rows.map(r => {
+      let obj: any = {};
+      try { obj = JSON.parse(r.data ?? '{}'); } catch {}
+      const rec: any = { __rowId: r.rowId };
+      for (const c of cols) {
+        rec[c.name] = obj?.[c.name] ?? null;
+      }
+      return rec;
+    });
+  }
 
   // ---------- Local helpers ----------
   private async loadLocalData(goLast = false) {

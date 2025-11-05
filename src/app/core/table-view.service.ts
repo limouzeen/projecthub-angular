@@ -118,11 +118,33 @@ export class TableViewService {
     return of(this.MOCK_ROWS[tableId] ?? []).pipe(delay(120));
   }
 
+  // ✅ ปรับ mock ให้ auto-increment PK (ถ้า UI ไม่ส่งมา) เพื่อจำลอง BE จริง
   createRow(tableId: number, data: Record<string, any>): Observable<RowDto> {
+    const cols = this.MOCK_COLUMNS[tableId] ?? [];
+    const pkCol = cols.find(c => c.isPrimary);
+    const payload = { ...data };
+
+    if (pkCol) {
+      const pkName = pkCol.name;
+      const hasPk = payload[pkName] !== undefined && payload[pkName] !== null && payload[pkName] !== '';
+      if (!hasPk) {
+        const rows = this.MOCK_ROWS[tableId] ?? [];
+        let max = 0;
+        for (const r of rows) {
+          try {
+            const obj = JSON.parse(r.data || '{}');
+            const v = Number(obj[pkName]);
+            if (!Number.isNaN(v)) max = Math.max(max, v);
+          } catch {}
+        }
+        payload[pkName] = max + 1;
+      }
+    }
+
     const row: RowDto = {
       rowId: Math.floor(Math.random() * 1e9),
       tableId,
-      data: JSON.stringify(data),
+      data: JSON.stringify(payload),
       createdAt: new Date().toISOString(),
     };
     this.MOCK_ROWS[tableId] = [...(this.MOCK_ROWS[tableId] ?? []), row];
@@ -163,6 +185,7 @@ export class TableViewService {
     return of(void 0).pipe(delay(100));
   }
 
+  // (ยังคงไว้ได้ แม้ UI จะไม่ใช้แล้ว)
   nextRunningId(tableId: number, pkName: string): Observable<number> {
     const rows = this.MOCK_ROWS[tableId] ?? [];
     let max = 0;
@@ -197,8 +220,5 @@ export class TableViewService {
     const start = (page - 1) * size;
     const rows  = all.slice(start, start + size);
     return of({ rows, total }).pipe(delay(120));
-
   }
-
-
 }

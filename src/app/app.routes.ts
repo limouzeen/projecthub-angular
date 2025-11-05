@@ -24,9 +24,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/edit-profile/edit-profile').then((m) => m.EditProfile),
   },
   {
-    path: 'projects/:projectId',loadComponent: () =>
-import('./pages/project-detail/project-detail').then((m) => m.ProjectDetail),
-  },
+  path: 'projects/:projectId',
+  loadComponent: () =>
+    import('./pages/project-detail/project-detail').then(m => m.ProjectDetail),
+},
+
 
 { path: 'table/:id', loadComponent: () => import('./pages/table-view/table-view').then(m => m.TableView) },
 

@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // ✅ ใช้ service เดิม (แก้ path ตามโครงจริงของคุณ ถ้าไฟล์อยู่คนละระดับ)
-import { TableViewService } from '../table-view.service';
+import { TableViewService } from '../../../core/table-view.service';
 
 export type RowDialogSave = Record<string, any>;
 
