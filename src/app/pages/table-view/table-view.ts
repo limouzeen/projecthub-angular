@@ -18,7 +18,7 @@ import { RowDialog } from './ui/row-dialog';
   styleUrl: './table-view.css',
 })
 export class TableView implements OnInit, AfterViewInit {
-  //สลับโหมด
+  // สลับโหมดโหลดข้อมูล (ให้คงค่าตามที่คุณใช้อยู่)
   private static readonly USE_REMOTE = false; // true = remote, false = local
 
   private readonly api = inject(TableViewService);
@@ -70,8 +70,13 @@ export class TableView implements OnInit, AfterViewInit {
 
   // ---------------- data ops ----------------
   async refresh() {
+    // โหลดคอลัมน์ (ฝั่งหลังบ้าน/Mock จะมีคอลัมน์ ID เป็น PK ให้อัตโนมัติ ถ้า table นี้สร้างแบบ Auto-increment)
     const cols = await firstValueFrom(this.api.listColumns(this.tableId));
-    this.columns.set(cols);
+
+    // (ออปชันเล็ก ๆ) จัดให้ PK แสดงก่อน เพื่อให้เห็น ID ชัดเจน — ไม่กระทบ UI สไตล์ที่คุณใช้
+    const sorted = [...cols].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+    this.columns.set(sorted);
+
     this.rows.set([]);
     this.ensureGridAndSync();
   }
@@ -105,7 +110,7 @@ export class TableView implements OnInit, AfterViewInit {
       alert('Please add at least 1 field before adding a row.');
       return;
     }
-    // ✅ FE ไม่ต้อง generate running id แล้ว — ให้ BE/Mock จัดการ auto-increment
+    // ✅ ฝั่ง FE ไม่ต้อง generate running id — ให้ BE/Mock เพิ่ม ID ให้อัตโนมัติ
     this.rowInitData = null;
     this.rowOpen.set(true);
   }
@@ -113,11 +118,14 @@ export class TableView implements OnInit, AfterViewInit {
   async onSaveRow(newObj: Record<string, any>) {
     this.rowOpen.set(false);
     this.rowInitData = null;
+
     if (this.editingRow) {
+      // แก้ไขแถว → ส่งค่าทุกฟิลด์ (PK แก้ไม่ได้อยู่แล้วจาก editor)
       await firstValueFrom(this.api.updateRow(this.editingRow.rowId, newObj));
       if (TableView.USE_REMOTE) this.reloadRemoteCurrentPage();
       else this.reloadLocalCurrentPage();
     } else {
+      // เพิ่มแถว → ให้ mock createRow() ใส่ ID ให้อัตโนมัติ แล้วเราเพียงรีเฟรชดูค่า ID
       await firstValueFrom(this.api.createRow(this.tableId, newObj));
       if (TableView.USE_REMOTE) await this.reloadRemoteToLastPage();
       else await this.reloadLocalToLastPage();
@@ -187,6 +195,7 @@ export class TableView implements OnInit, AfterViewInit {
       switch ((c.dataType || '').toUpperCase()) {
         case 'INTEGER':
         case 'REAL':
+          // PK (เช่น ID) จะไม่สามารถแก้ไขได้
           return { ...base, editor: c.isPrimary ? false : 'number' };
 
         case 'BOOLEAN':

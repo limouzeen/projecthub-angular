@@ -18,12 +18,12 @@ export class CreateTableDialog {
 
   // ฟอร์ม (ใช้ signal ตามสไตล์ใหม่)
   readonly name = signal('');
-  readonly useAutoIncrement = signal<boolean>(true);
+  readonly useAutoIncrement = signal<boolean>(true);  // ควบคุมการเลือก Auto-increment
 
   onCreate() {
     const n = this.name().trim();
     if (!n) return;
-    this.submit.emit({ name: n, useAutoIncrement: this.useAutoIncrement() });
+    this.submit.emit({ name: n, useAutoIncrement: this.useAutoIncrement() });  // ส่งค่าผ่าน emit
     this.resetAndClose();
   }
 
@@ -33,7 +33,7 @@ export class CreateTableDialog {
 
   private resetAndClose() {
     this.name.set('');
-    this.useAutoIncrement.set(true);
+    this.useAutoIncrement.set(true);  // ตั้งค่าหมายเหตุว่าเลือก Auto-increment เป็น default
     this.close.emit();
   }
 }
