@@ -2,8 +2,15 @@
   <div class="flex items-center justify-between max-w-5xl mx-auto mb-4">
     <div class="text-xl font-semibold">Project tables</div>
     <div class="flex gap-2">
-      <input class="input w-56" placeholder="Filter tables..." [value]="q()" (input)="q.set($any($event.target).value)" />
-      <button class="btn-primary-enhance" (click)="openCreateDialog()" [disabled]="creating()">
+      <input
+        class="input w-56"
+        placeholder="Filter tables..."
+        [value]="q()"
+        (input)="q.set($any($event.target).value)" />
+      <button
+        class="btn-primary-enhance"
+        (click)="openCreateDialog()"
+        [disabled]="creating()">
         @if (creating()) {Creating...} @else {Create Table}
       </button>
     </div>
@@ -18,10 +25,16 @@
             <div class="font-medium">{{ t.name }}</div>
             <div class="flex gap-2">
               <button class="btn-ghost-enhance" (click)="open(t)">Open</button>
-              <button class="btn-ghost-enhance" (click)="renameTable(t)" [disabled]="renamingId()===t.tableId">
+              <button
+                class="btn-ghost-enhance"
+                (click)="renameTable(t)"
+                [disabled]="renamingId()===t.tableId">
                 @if (renamingId()===t.tableId) {Renaming...} @else {Rename}
               </button>
-              <button class="btn-ghost-enhance text-rose-600" (click)="deleteTable(t)" [disabled]="deletingId()===t.tableId">
+              <button
+                class="btn-ghost-enhance text-rose-600"
+                (click)="deleteTable(t)"
+                [disabled]="deletingId()===t.tableId">
                 @if (deletingId()===t.tableId) {Deleting...} @else {Delete}
               </button>
             </div>
@@ -35,16 +48,16 @@
     <div class="glass rounded-3xl p-5">
       <div class="text-sm text-slate-500 mb-3">Tips</div>
       <ul class="list-disc pl-4 text-sm text-slate-600 space-y-1">
-        <li>“Open” เพื่อไปหน้าจัดการฟิลด์และแถว</li>
-        <li>สามารถสร้าง <strong>Lookup</strong> เพื่อดึงค่าจากตารางอื่น และ <strong>Formula</strong> สำหรับคำนวณอัตโนมัติ</li>
+        <li>ติ๊ก <strong>Auto-increment</strong> เพื่อให้ระบบสร้างคอลัมน์ <b>ID</b> (PK) ให้อัตโนมัติ</li>
+        <li>หน้า Table-view จะล็อกฟิลด์ PK ไม่ให้แก้ไข และเวลากด Add Row จะดึงเลขรันอัตโนมัติ</li>
       </ul>
     </div>
   </div>
-</section>
 
-<!-- ✅ Modal -->
-<app-create-table-dialog
-  [open]="createOpen()"
-  (cancel)="closeCreateDialog()"
-  (submit)="handleCreate($event)"
-></app-create-table-dialog>
+  <!-- Create Table Dialog -->
+  <app-create-table-dialog
+    [open]="dialogOpen()"
+    (close)="dialogOpen.set(false)"
+    (submit)="onCreateTable($event)">
+  </app-create-table-dialog>
+</section>

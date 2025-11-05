@@ -1,10 +1,10 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { ProjectDetailService, TableDto } from '../../core/project-detail.service';
-import { CreateTableDialog, CreateTablePayload } from './ui/create-table-dialog';
+import { CreateTableDialog } from './ui/create-table-dialog';
 
 @Component({
   selector: 'app-project-detail',
@@ -14,29 +14,32 @@ import { CreateTableDialog, CreateTablePayload } from './ui/create-table-dialog'
   styleUrl: './project-detail.css',
 })
 export class ProjectDetail implements OnInit {
-  private readonly api = inject(ProjectDetailService);
+  private readonly api    = inject(ProjectDetailService);
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
+  private readonly route  = inject(ActivatedRoute);
 
   projectId = 1;
 
-  readonly tables = signal<TableDto[]>([]);
-  readonly q = signal('');
-  readonly loading = signal(false);
-  readonly creating = signal(false);
+  // state
+  readonly tables     = signal<TableDto[]>([]);
+  readonly q          = signal('');
+  readonly loading    = signal(false);
+  readonly creating   = signal(false);
   readonly renamingId = signal<number | null>(null);
   readonly deletingId = signal<number | null>(null);
 
-  readonly createOpen = signal(false);
+  // dialog
+  readonly dialogOpen = signal(false);
 
+  // filter
   readonly filtered = computed(() => {
-    const k = this.q().toLowerCase().trim();
-    return !k ? this.tables() : this.tables().filter(t => t.name.toLowerCase().includes(k));
+    const keyword = this.q().toLowerCase().trim();
+    return !keyword ? this.tables() : this.tables().filter(t => t.name.toLowerCase().includes(keyword));
   });
 
   async ngOnInit() {
-    const idFromRoute = Number(this.route.snapshot.paramMap.get('projectId') ?? this.route.snapshot.paramMap.get('id') ?? '0');
-    if (!Number.isNaN(idFromRoute) && idFromRoute > 0) this.projectId = idFromRoute;
+    const fromRoute = Number(this.route.snapshot.paramMap.get('projectId') ?? this.route.snapshot.paramMap.get('id') ?? '0');
+    if (!Number.isNaN(fromRoute) && fromRoute > 0) this.projectId = fromRoute;
     await this.refresh();
   }
 
@@ -44,25 +47,52 @@ export class ProjectDetail implements OnInit {
     this.loading.set(true);
     try {
       this.tables.set(await firstValueFrom(this.api.listTables(this.projectId)));
-    } finally { this.loading.set(false); }
+    } finally {
+      this.loading.set(false);
+    }
   }
 
-  openCreateDialog() { this.createOpen.set(true); }
-  closeCreateDialog() { this.createOpen.set(false); }
+  openCreateDialog() {
+    this.dialogOpen.set(true);
+  }
 
-  /**  ส่ง { projectId, name, useAutoIncrement } */
-  async handleCreate(payload: CreateTablePayload) {
+  async onCreateTable(payload: { name: string; useAutoIncrement: boolean }) {
     this.creating.set(true);
     try {
       await firstValueFrom(this.api.createTable(this.projectId, payload.name, payload.useAutoIncrement));
       await this.refresh();
     } finally {
       this.creating.set(false);
-      this.closeCreateDialog();
+      this.dialogOpen.set(false);
     }
   }
 
-  async renameTable(t: TableDto) { /* ... เหมือนเดิม ... */ }
-  async deleteTable(t: TableDto) { /* ... เหมือนเดิม ... */ }
-  open(t: TableDto) { this.router.navigate(['/table', t.tableId]); }
+  async renameTable(t: TableDto) {
+    const next = window.prompt('Rename table:', t.name);
+    if (!next || next === t.name) return;
+
+    this.renamingId.set(t.tableId);
+    try {
+      await firstValueFrom(this.api.renameTable(t.tableId, next));
+      await this.refresh();
+    } finally {
+      this.renamingId.set(null);
+    }
+  }
+
+  async deleteTable(t: TableDto) {
+    if (!window.confirm(`Delete table "${t.name}"?`)) return;
+
+    this.deletingId.set(t.tableId);
+    try {
+      await firstValueFrom(this.api.deleteTable(t.tableId));
+      await this.refresh();
+    } finally {
+      this.deletingId.set(null);
+    }
+  }
+
+  open(t: TableDto) {
+    this.router.navigate(['/table', t.tableId]); // ไปหน้า table-view
+  }
 }

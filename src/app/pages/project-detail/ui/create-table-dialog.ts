@@ -1,11 +1,6 @@
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type CreateTablePayload = {
-  name: string;
-  useAutoIncrement: boolean;
-};
-
 @Component({
   selector: 'app-create-table-dialog',
   standalone: true,
@@ -14,17 +9,31 @@ export type CreateTablePayload = {
   styleUrl: './create-table-dialog.css',
 })
 export class CreateTableDialog {
+  // เปิด/ปิด dialog (ควบคุมโดย parent)
   @Input() open = false;
-  @Output() cancel = new EventEmitter<void>();
-  @Output() submit = new EventEmitter<CreateTablePayload>();
 
-  name = signal('');
-  useAutoIncrement = signal(true); 
+  // ส่งอีเวนต์กลับไปยัง parent
+  @Output() close = new EventEmitter<void>();
+  @Output() submit = new EventEmitter<{ name: string; useAutoIncrement: boolean }>();
 
-  close() { this.cancel.emit(); }
+  // ฟอร์ม (ใช้ signal ตามสไตล์ใหม่)
+  readonly name = signal('');
+  readonly useAutoIncrement = signal<boolean>(true);
+
   onCreate() {
     const n = this.name().trim();
     if (!n) return;
     this.submit.emit({ name: n, useAutoIncrement: this.useAutoIncrement() });
+    this.resetAndClose();
+  }
+
+  onCancel() {
+    this.resetAndClose();
+  }
+
+  private resetAndClose() {
+    this.name.set('');
+    this.useAutoIncrement.set(true);
+    this.close.emit();
   }
 }
