@@ -84,13 +84,27 @@ export class Dashboard implements AfterViewInit, OnDestroy {
   });
 
   constructor(
-    private svc: ProjectsService,
-    private router: Router,
-    private footer: FooterStateService
-  ) {
-    effect(() => this.projects.set(this.svc.list()));
-    effect(() => { this.filtered(); this.pageIndex.set(0); });
-  }
+  private svc: ProjectsService,
+  private router: Router,
+  private footer: FooterStateService
+) {
+  // sync รายการจาก service ตามเดิม
+  effect(() => this.projects.set(this.svc.list()), { allowSignalWrites: true });
+
+  //  รีเซ็ตหน้าเฉพาะเมื่อเงื่อนไขการค้นหา/ขนาดหน้าเปลี่ยน
+  effect(() => {
+    const _q = this.keyword();     // ผูกกับ keyword
+    const _s = this.pageSize();    // ผูกกับ pageSize
+    this.pageIndex.set(0);
+  }, { allowSignalWrites: true });
+
+  // (เสริม) ถ้าจำนวนหน้าลดลง ให้ clamp หน้าไม่ให้เกิน
+  effect(() => {
+    const pc = this.pageCount();
+    if (this.pageIndex() >= pc) this.pageIndex.set(pc - 1);
+  }, { allowSignalWrites: true });
+}
+
 
   toggleAside() {
     const next = !this.asideOpen();
