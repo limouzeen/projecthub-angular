@@ -1,8 +1,111 @@
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.28);display:grid;place-items:center;z-index:50}
-.dialog{background:white;box-shadow:0 10px 30px rgba(0,0,0,.1)}
-.label{font-size:.85rem;color:#475569}
-.input{width:100%;border:1px solid #cbd5e1;border-radius:.75rem;padding:.5rem .75rem}
-.divider{margin-top:.25rem;margin-bottom:.25rem;color:#475569;font-weight:600}
-.hint{color:#64748b}
-.btn-ghost{padding:.5rem .9rem;border-radius:.75rem;border:1px solid #cbd5e1}
-.btn-primary{padding:.5rem 1rem;border-radius:.75rem;background:#6366f1;color:white}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .28);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.dialog {
+  background: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .1);
+}
+
+.label {
+  font-size: .85rem;
+  color: #475569;
+}
+
+.label.small {
+  font-size: .7rem;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: .75rem;
+  padding: .5rem .75rem;
+}
+
+.divider {
+  margin-top: .25rem;
+  margin-bottom: .25rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.hint {
+  color: #64748b;
+  font-size: .8rem;
+}
+
+.btn-ghost {
+  padding: .5rem .9rem;
+  border-radius: .75rem;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-primary {
+  padding: .5rem 1rem;
+  border-radius: .75rem;
+  background: #6366f1;
+  color: white;
+}
+
+/* Formula builder layout */
+.formula-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: .5rem;
+}
+
+.formula-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.op-group {
+  display: flex;
+  gap: .35rem;
+}
+
+.op-btn {
+  flex: 1 1 auto;
+  padding: .35rem 0;
+  border-radius: .6rem;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: .9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all .12s ease;
+}
+
+.op-btn:hover {
+  background: #f8fafc;
+}
+
+.op-btn.active {
+  border-color: #4f46e5;
+  background: #eef2ff;
+  color: #3730a3;
+  font-weight: 600;
+}
+
+.formula-preview {
+  margin-top: .25rem;
+  padding: .35rem .5rem;
+  border-radius: .6rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+}
+
+.formula-preview pre {
+  margin: 0;
+  font-size: .65rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
