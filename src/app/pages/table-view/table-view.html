@@ -56,4 +56,14 @@
     (save)="onSaveRow($event)"
     (cancel)="rowOpen.set(false)">
   </ph-row-dialog>
+
+    <ph-image-dialog
+    [open]="imageDlgOpen()"
+    [mode]="imageDlgMode"
+    [currentUrl]="imageDlgUrl"
+    (saveUrl)="onImageDialogSave($event)"
+    (confirmDelete)="onImageDialogDelete()"
+    (cancel)="onImageDialogCancel()">
+  </ph-image-dialog>
+
 </section>

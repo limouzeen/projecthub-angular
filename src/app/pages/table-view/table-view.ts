@@ -15,11 +15,13 @@ import { TabulatorFull as Tabulator } from 'tabulator-tables/dist/js/tabulator_e
 import { TableViewService, ColumnDto, RowDto } from '../../core/table-view.service';
 import { FieldDialog } from './ui/field-dialog';
 import { RowDialog } from './ui/row-dialog';
+import { ImageDialog } from './ui/image-dialog/image-dialog';
+
 
 @Component({
   selector: 'app-table-view',
   standalone: true,
-  imports: [CommonModule, FieldDialog, RowDialog],
+  imports: [CommonModule, FieldDialog, RowDialog, ImageDialog],
   templateUrl: './table-view.html',
   styleUrl: './table-view.css',
 })
@@ -30,6 +32,14 @@ export class TableView implements OnInit, AfterViewInit {
   private readonly route = inject(ActivatedRoute);
 
   private readonly THUMB_H = 70;
+
+  // image dialog state
+  imageDlgOpen = signal(false);
+  imageDlgMode: 'url' | 'delete' = 'url';
+  imageDlgField = '';
+  imageDlgRecord: any = null;
+  imageDlgUrl = '';
+  //  -----------------------
 
   tableId = 0;
   columns = signal<ColumnDto[]>([]);
@@ -201,6 +211,55 @@ export class TableView implements OnInit, AfterViewInit {
     }
   }
 
+
+
+  //Image Dialog in Grid
+
+    private openImageUrlDialog(record: any, field: string, currentUrl: string) {
+    this.imageDlgRecord = record;
+    this.imageDlgField = field;
+    this.imageDlgUrl = currentUrl || '';
+    this.imageDlgMode = 'url';
+    this.imageDlgOpen.set(true);
+  }
+
+  private openImageDeleteDialog(record: any, field: string, currentUrl: string) {
+    this.imageDlgRecord = record;
+    this.imageDlgField = field;
+    this.imageDlgUrl = currentUrl || '';
+    this.imageDlgMode = 'delete';
+    this.imageDlgOpen.set(true);
+  }
+
+  onImageDialogSave(url: string) {
+    this.imageDlgOpen.set(false);
+    if (this.imageDlgRecord && this.imageDlgField) {
+      this.setImageUrl(this.imageDlgRecord, this.imageDlgField, url);
+    }
+    this.resetImageDialogState();
+  }
+
+  onImageDialogDelete() {
+    this.imageDlgOpen.set(false);
+    if (this.imageDlgRecord && this.imageDlgField) {
+      this.setImageUrl(this.imageDlgRecord, this.imageDlgField, null);
+    }
+    this.resetImageDialogState();
+  }
+
+  onImageDialogCancel() {
+    this.imageDlgOpen.set(false);
+    this.resetImageDialogState();
+  }
+
+  private resetImageDialogState() {
+    this.imageDlgRecord = null;
+    this.imageDlgField = '';
+    this.imageDlgUrl = '';
+    this.imageDlgMode = 'url';
+  }
+
+
   // =====================================================
   //                 TABULATOR CONFIG
   // =====================================================
@@ -297,7 +356,7 @@ export class TableView implements OnInit, AfterViewInit {
                 z-index:5;
               `;
 
-              const btnUrl = document.createElement('button');
+                            const btnUrl = document.createElement('button');
               btnUrl.type = 'button';
               btnUrl.innerText = '🔗';
               btnUrl.title = 'Set image URL';
@@ -314,13 +373,10 @@ export class TableView implements OnInit, AfterViewInit {
               `;
               btnUrl.onclick = (ev) => {
                 ev.stopPropagation();
+                const rec = cell.getRow().getData() as any;
+                const f = cell.getField() as string;
                 const current = (cell.getValue() as string) || '';
-                const input = prompt('Image URL', current);
-                if (input && input.trim()) {
-                  const rec = cell.getRow().getData() as any;
-                  const f = cell.getField() as string;
-                  this.setImageUrl(rec, f, input.trim());
-                }
+                this.openImageUrlDialog(rec, f, current);
               };
 
               const btnClear = document.createElement('button');
@@ -342,10 +398,11 @@ export class TableView implements OnInit, AfterViewInit {
                 ev.stopPropagation();
                 const rec = cell.getRow().getData() as any;
                 const f = cell.getField() as string;
-                if (!rec[f]) return;
-                if (!confirm('Remove this image?')) return;
-                this.setImageUrl(rec, f, null);
+                const current = (cell.getValue() as string) || '';
+                if (!current) return;
+                this.openImageDeleteDialog(rec, f, current);
               };
+
 
               tools.appendChild(btnUrl);
               tools.appendChild(btnClear);

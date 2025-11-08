@@ -33,6 +33,7 @@ export const routes: Routes = [
 { path: 'table/:id', loadComponent: () => import('./pages/table-view/table-view').then(m => m.TableView) },
 
 
+
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   { path: '**', redirectTo: 'dashboard' },
 

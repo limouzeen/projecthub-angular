@@ -1,0 +1,68 @@
+@if (open) {
+  <div class="overlay">
+    <div class="dialog glass rounded-2xl p-5 max-w-md w-[92vw]">
+      @if (mode === 'url') {
+        <div class="title mb-3">Set image URL</div>
+
+        <div class="space-y-3">
+          <input
+            class="input w-full"
+            type="text"
+            [(ngModel)]="url"
+            name="url"
+            placeholder="https://example.com/image.png" />
+
+          <div class="hint text-xs text-slate-500">
+            วางลิงก์รูปภาพที่เข้าถึงได้ เช่น CDN หรือไฟล์สาธารณะ หรือ URL ที่สามารถเปิดในเบราว์เซอร์
+          </div>
+        </div>
+
+        <div class="flex gap-3 justify-end mt-4">
+          <button
+            class="btn-ghost-enhance"
+            type="button"
+            (click)="onCancel()">
+            Cancel
+          </button>
+          <button
+            class="btn-primary-enhance"
+            type="button"
+            [disabled]="!(url.trim())"
+            (click)="onSaveUrl()">
+            Save
+          </button>
+        </div>
+      } @else {
+        <div class="title mb-3">Remove image</div>
+
+        <p class="text-sm text-slate-600 mb-4">
+          ต้องการลบรูปนี้ออกจากแถวนี้หรือไม่? 
+        </p>
+
+        @if (currentUrl) {
+          <div class="mb-4 flex justify-center">
+            <img
+              [src]="currentUrl"
+              alt="Image preview"
+              class="h-24 max-w-full rounded-lg object-contain shadow-sm" />
+          </div>
+        }
+
+        <div class="flex gap-3 justify-end">
+          <button
+            class="btn-ghost-enhance"
+            type="button"
+            (click)="onCancel()">
+            Cancel
+          </button>
+          <button
+            class="btn-danger"
+            type="button"
+            (click)="onConfirmDelete()">
+            Delete
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}
