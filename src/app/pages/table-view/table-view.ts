@@ -1,5 +1,11 @@
 import {
-  Component, inject, signal, OnInit, AfterViewInit, ViewChild, ElementRef,
+  Component,
+  inject,
+  signal,
+  OnInit,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -29,7 +35,7 @@ export class TableView implements OnInit, AfterViewInit {
   columns = signal<ColumnDto[]>([]);
   rows    = signal<RowDto[]>([]);
 
-  /** ธงว่า table นี้เป็น auto-increment (จาก localStorage) */
+  /** ธงว่า table นี้เป็น auto-increment (จำจาก localStorage) */
   isAutoTable = signal<boolean>(false);
 
   fieldOpen = signal(false);
@@ -70,12 +76,14 @@ export class TableView implements OnInit, AfterViewInit {
 
   // ---------------- data ops ----------------
   async refresh() {
-    // อ่าน schema (service จะ auto สร้าง ID ให้ถ้าเป็น table auto)
     const cols = await firstValueFrom(this.api.listColumns(this.tableId));
     this.columns.set(cols);
 
-    // ธง auto จาก localStorage
-    try { this.isAutoTable.set(localStorage.getItem('ph:auto:' + this.tableId) === '1'); } catch { this.isAutoTable.set(false); }
+    try {
+      this.isAutoTable.set(localStorage.getItem('ph:auto:' + this.tableId) === '1');
+    } catch {
+      this.isAutoTable.set(false);
+    }
 
     this.rows.set([]);
     this.ensureGridAndSync();
@@ -107,19 +115,16 @@ export class TableView implements OnInit, AfterViewInit {
   async onAddRow() {
     this.editingRow = null;
 
-    // ต้องมีอย่างน้อย 1 ฟิลด์
     if ((this.columns()?.length ?? 0) === 0) {
       alert('Please add at least 1 field before adding a row.');
       return;
     }
 
-    // ถ้าเป็น table auto → ดึง next ID มา “โชว์ล่วงหน้า” และล็อกแก้ไขใน dialog
     if (this.isAutoTable()) {
       const pk = this.columns().find(c => c.isPrimary)?.name || 'ID';
       const next = await firstValueFrom(this.api.nextRunningId(this.tableId, pk));
       this.rowInitData = { [pk]: next };
     } else {
-      // ไม่ auto → ให้ผู้ใช้กรอกเอง
       this.rowInitData = null;
     }
 
@@ -165,196 +170,289 @@ export class TableView implements OnInit, AfterViewInit {
     else this.reloadLocalCurrentPage(true);
   }
 
+  // ---------- Image helpers ----------
   private onImagePicked(record: any, fieldName: string, file: File) {
     this.api
       .uploadImage(file, { tableId: this.tableId, rowId: record.__rowId })
       .then(async (url) => {
-        try {
-          if (typeof (this.api as any).updateRowField === 'function') {
-            await firstValueFrom(this.api.updateRowField(record.__rowId, fieldName, url as any));
-          } else {
-            await firstValueFrom(this.api.updateRow(record.__rowId, { ...record, [fieldName]: url }));
-          }
-        } catch {}
-        try { record[fieldName] = url; } catch {}
-        if (TableView.USE_REMOTE) this.reloadRemoteCurrentPage();
-        else this.reloadLocalCurrentPage();
+        await this.setImageUrl(record, fieldName, url as any);
       })
       .catch((err) => console.error('upload failed', err));
+  }
+
+  /** ตั้งค่า URL หรือเคลียร์รูปใน cell (ใช้ทั้งปุ่ม 🔗 และ 🗑) */
+  private async setImageUrl(record: any, fieldName: string, url: string | null) {
+    const rowId = record.__rowId as number;
+    try {
+      if (typeof (this.api as any).updateRowField === 'function') {
+        await firstValueFrom(this.api.updateRowField(rowId, fieldName, url));
+      } else {
+        const payload: Record<string, any> = {};
+        for (const c of this.columns()) payload[c.name] = record[c.name];
+        payload[fieldName] = url;
+        await firstValueFrom(this.api.updateRow(rowId, payload));
+      }
+      record[fieldName] = url;
+
+      if (TableView.USE_REMOTE) this.reloadRemoteCurrentPage();
+      else this.reloadLocalCurrentPage();
+    } catch (err) {
+      console.error('set image url failed', err);
+    }
   }
 
   // =====================================================
   //                 TABULATOR CONFIG
   // =====================================================
   private buildColumnsForGrid(): any[] {
-  const cols = this.columns();
+    const cols = this.columns();
 
-  const defs: any[] = cols.map((c) => {
-    const field = c.name;
-    const base: any = {
-      title: c.name,
-      field,
+    const defs: any[] = cols.map((c) => {
+      const field = c.name;
+      const base: any = {
+        title: c.name,
+        field,
+        headerHozAlign: 'center',
+        hozAlign: 'center',
+        vertAlign: 'middle',
+        resizable: true,
+        editor: false,
+      };
+
+      const lock = c.isPrimary && this.isAutoTable();
+
+      switch ((c.dataType || '').toUpperCase()) {
+        case 'INTEGER':
+        case 'REAL':
+          return { ...base, editor: lock ? false : 'number' };
+
+        case 'BOOLEAN':
+          return {
+            ...base,
+            formatter: 'tickCross',
+            editor: lock ? false : 'tickCross',
+          };
+
+        case 'IMAGE': {
+          return {
+            ...base,
+            cssClass: 'cell-image',
+            formatter: (cell: any) => {
+              const url = (cell.getValue() as string) || null;
+              const wrap = document.createElement('div');
+              wrap.className = 'img-wrap';
+              wrap.style.cssText = `
+                position:relative;
+                width:100%;
+                height:${this.THUMB_H}px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                overflow:hidden;
+                border-radius:8px;
+              `;
+
+              if (url) {
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.cssText = `
+                  height:100%;
+                  width:auto;
+                  max-width:100%;
+                  object-fit:cover;
+                  display:block;
+                  border-radius:8px;
+                `;
+                img.onload = () => {
+                  try { cell.getRow().normalizeHeight(); } catch {}
+                };
+                wrap.appendChild(img);
+              } else {
+                const ph = document.createElement('div');
+                ph.style.cssText = `
+                  width: clamp(72px, 40%, 260px);
+                  height: calc(100% - 10px);
+                  border: 2px dashed rgba(0,0,0,.18);
+                  border-radius: 10px;
+                  background: repeating-linear-gradient(
+                    45deg,
+                    rgba(0,0,0,.03),
+                    rgba(0,0,0,.03) 6px,
+                    transparent 6px,
+                    transparent 12px
+                  );
+                `;
+                wrap.appendChild(ph);
+              }
+
+              // toolbar
+              const tools = document.createElement('div');
+              tools.className = 'img-tools';
+              tools.style.cssText = `
+                position:absolute;
+                top:4px;
+                right:4px;
+                display:flex;
+                gap:4px;
+                z-index:5;
+              `;
+
+              const btnUrl = document.createElement('button');
+              btnUrl.type = 'button';
+              btnUrl.innerText = '🔗';
+              btnUrl.title = 'Set image URL';
+              btnUrl.style.cssText = `
+                width:20px;height:20px;
+                border:none;
+                border-radius:999px;
+                font-size:12px;
+                line-height:20px;
+                padding:0;
+                cursor:pointer;
+                background:rgba(248,250,252,.95);
+                color:#ef4444;
+              `;
+              btnUrl.onclick = (ev) => {
+                ev.stopPropagation();
+                const current = (cell.getValue() as string) || '';
+                const input = prompt('Image URL', current);
+                if (input && input.trim()) {
+                  const rec = cell.getRow().getData() as any;
+                  const f = cell.getField() as string;
+                  this.setImageUrl(rec, f, input.trim());
+                }
+              };
+
+              const btnClear = document.createElement('button');
+              btnClear.type = 'button';
+              btnClear.innerText = '🗑';
+              btnClear.title = 'Remove image';
+              btnClear.style.cssText = `
+                width:20px;height:20px;
+                border:none;
+                border-radius:999px;
+                font-size:12px;
+                line-height:20px;
+                padding:0;
+                cursor:pointer;
+                background:rgba(248,250,252,.95);
+                color:#ef4444;
+              `;
+              btnClear.onclick = (ev) => {
+                ev.stopPropagation();
+                const rec = cell.getRow().getData() as any;
+                const f = cell.getField() as string;
+                if (!rec[f]) return;
+                if (!confirm('Remove this image?')) return;
+                this.setImageUrl(rec, f, null);
+              };
+
+              tools.appendChild(btnUrl);
+              tools.appendChild(btnClear);
+              wrap.appendChild(tools);
+
+              return wrap;
+            },
+            // คลิกพื้นที่ cell (ไม่ใช่ปุ่ม) = อัปโหลดไฟล์
+            cellClick: (_e: any, cell: any) => {
+              // note: ปุ่มใช้ ev.stopPropagation() แล้ว
+              const fileInput = document.createElement('input');
+              fileInput.type = 'file';
+              fileInput.accept = 'image/*';
+              fileInput.onchange = () => {
+                const file = fileInput.files?.[0];
+                if (!file) return;
+                const record = cell.getRow().getData() as any;
+                const fieldName = cell.getField() as string;
+                this.onImagePicked(record, fieldName, file);
+              };
+              fileInput.click();
+            },
+          };
+        }
+
+        case 'FORMULA': {
+          let formulaFn: ((record: any) => any) | null = null;
+          try {
+            const raw = c.formulaDefinition || '';
+            if (raw) {
+              const def = JSON.parse(raw);
+              if (def.type === 'operator' && def.value && def.left && def.right) {
+                const op = def.value;
+                const left = def.left;
+                const right = def.right;
+
+                formulaFn = (rec: any) => {
+                  const leftVal =
+                    left.type === 'column'
+                      ? Number(rec[left.name] ?? 0)
+                      : Number(left.value ?? 0);
+                  const rightVal =
+                    right.type === 'column'
+                      ? Number(rec[right.name] ?? 0)
+                      : Number(right.value ?? 0);
+
+                  switch (op) {
+                    case '+': return leftVal + rightVal;
+                    case '-': return leftVal - rightVal;
+                    case '*': return leftVal * rightVal;
+                    case '/': return rightVal !== 0 ? leftVal / rightVal : null;
+                    default: return null;
+                  }
+                };
+              }
+            }
+          } catch (err) {
+            console.warn('Formula parse error for column', c.name, err);
+          }
+
+          return {
+            ...base,
+            editor: false,
+            formatter: (cell: any) => {
+              const rec = cell.getRow().getData();
+              const v = formulaFn ? formulaFn(rec) : '';
+              return `<div>${v ?? ''}</div>`;
+            },
+            tooltip: c.formulaDefinition ? `Formula: ${c.formulaDefinition}` : '',
+          };
+        }
+
+        default:
+          return { ...base, editor: lock ? false : 'input' };
+      }
+    });
+
+    // Actions
+    defs.push({
+      title: 'Actions',
+      field: '__actions',
+      width: 160,
       headerHozAlign: 'center',
       hozAlign: 'center',
       vertAlign: 'middle',
-      resizable: true,
-      editor: false,
-    };
+      widthGrow: 0,
+      formatter: () => `
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button data-action="save"   class="underline text-emerald-600">Save</button>
+          <button data-action="delete" class="underline text-red-600">Delete</button>
+        </div>
+      `,
+      cellClick: async (e: any, cell: any) => {
+        const btn = (e.target as HTMLElement).closest('button');
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        const record = cell.getRow().getData() as any;
+        if (action === 'save')   await this.saveRowByRecord(record);
+        if (action === 'delete') await this.deleteRowByRecord(record);
+      },
+      resizable: false,
+    });
 
-    const lock = c.isPrimary && this.isAutoTable();
+    return defs;
+  }
 
-    switch ((c.dataType || '').toUpperCase()) {
-      case 'INTEGER':
-      case 'REAL':
-        return { ...base, editor: lock ? false : 'number' };
-
-      case 'BOOLEAN':
-        return {
-          ...base,
-          formatter: 'tickCross',
-          editor: lock ? false : 'tickCross',
-        };
-
-      case 'IMAGE':
-        return {
-          ...base,
-          cssClass: 'cell-image',
-          formatter: (cell: any) => {
-            const url = (cell.getValue() as string) || null;
-            const wrap = document.createElement('div');
-            wrap.className = 'img-wrap';
-            wrap.style.cssText = `
-              width:100%;
-              height:${this.THUMB_H}px;
-              display:flex;align-items:center;justify-content:center;
-              overflow:hidden;border-radius:8px;
-            `;
-
-            if (url) {
-              const img = document.createElement('img');
-              img.src = url;
-              img.style.cssText = `
-                height:100%;
-                width:auto; max-width:100%;
-                object-fit:cover; display:block; border-radius:8px;
-              `;
-              img.onload = () => { try { cell.getRow().normalizeHeight(); } catch {} };
-              wrap.appendChild(img);
-            } else {
-              const ph = document.createElement('div');
-              ph.style.cssText = `
-                width: clamp(72px, 15%, 260px);
-                height: calc(100% - 10px);
-                border: 2px dashed rgba(0,0,0,.20);
-                border-radius: 10px;
-                background: repeating-linear-gradient(
-                  45deg, rgba(0,0,0,.04), rgba(0,0,0,.04) 6px, transparent 6px, transparent 12px
-                );
-              `;
-              wrap.appendChild(ph);
-            }
-            return wrap;
-          },
-          cellClick: (_e: any, cell: any) => {
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.onchange = () => {
-              const file = fileInput.files?.[0];
-              if (!file) return;
-              const record = cell.getRow().getData() as any;
-              const fieldName = cell.getField() as string;
-              this.onImagePicked(record, fieldName, file);
-            };
-            fileInput.click();
-          },
-        };
-
-      case 'FORMULA': {
-        let formulaFn: ((record: any) => any) | null = null;
-
-        try {
-          const raw = c.formulaDefinition || '';
-          if (raw) {
-            const def = JSON.parse(raw);
-            if (def.type === 'operator' && def.value && def.left && def.right) {
-              const op = def.value;
-              const left = def.left;
-              const right = def.right;
-
-              formulaFn = (rec: any) => {
-                const leftVal =
-                  left.type === 'column'
-                    ? Number(rec[left.name] ?? 0)
-                    : Number(left.value ?? 0);
-                const rightVal =
-                  right.type === 'column'
-                    ? Number(rec[right.name] ?? 0)
-                    : Number(right.value ?? 0);
-
-                switch (op) {
-                  case '+': return leftVal + rightVal;
-                  case '-': return leftVal - rightVal;
-                  case '*': return leftVal * rightVal;
-                  case '/': return rightVal !== 0 ? leftVal / rightVal : null;
-                  default:  return null;
-                }
-              };
-            }
-          }
-        } catch (err) {
-          console.warn('Formula parse error for column', c.name, err);
-        }
-
-        return {
-          ...base,
-          editor: false,
-          formatter: (cell: any) => {
-            const rec = cell.getRow().getData();
-            const v = formulaFn ? formulaFn(rec) : '';
-            return `<div>${v ?? ''}</div>`;
-          },
-          tooltip: c.formulaDefinition
-            ? `Formula: ${c.formulaDefinition}`
-            : '',
-        };
-      }
-
-      default:
-        return { ...base, editor: lock ? false : 'input' };
-    }
-  });
-
-  // ... (ส่วน Actions column เหมือนเดิม)
-  defs.push({
-    title: 'Actions',
-    field: '__actions',
-    width: 160,
-    headerHozAlign: 'center',
-    hozAlign: 'center',
-    vertAlign: 'middle',
-    widthGrow: 0,
-    formatter: () => `
-      <div style="display:flex;gap:8px;justify-content:center">
-        <button data-action="save"   class="underline text-emerald-600">Save</button>
-        <button data-action="delete" class="underline text-red-600">Delete</button>
-      </div>
-    `,
-    cellClick: async (e: any, cell: any) => {
-      const btn = (e.target as HTMLElement).closest('button');
-      if (!btn) return;
-      const action = btn.getAttribute('data-action');
-      const record = cell.getRow().getData() as any;
-      if (action === 'save')   await this.saveRowByRecord(record);
-      if (action === 'delete') await this.deleteRowByRecord(record);
-    },
-    resizable: false,
-  });
-
-  return defs;
-}
-
-
+  // ---------- build data ----------
   private buildDataForGridFromRows(rows: RowDto[]): any[] {
     const cols = this.columns();
     return rows.map(r => {
@@ -390,7 +488,7 @@ export class TableView implements OnInit, AfterViewInit {
     await this.loadLocalData(true);
   }
 
-  // ---------- Remote helpers ----------
+  // ---------- Remote helpers (mock) ----------
   private reloadRemoteCurrentPage(goFirst = false) {
     const cur = goFirst ? 1 : (this.grid?.getPage?.() || 1);
     this.grid.setData().then(() => {

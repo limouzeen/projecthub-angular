@@ -1,39 +1,62 @@
-.grid-wrap { width: 100%; }
-
-/* padding ปกติของเซลล์ */
-:host ::ng-deep .tabulator .tabulator-row .tabulator-cell {
-  padding: 8px !important;
-  text-align: center;
-}
-
-/* เซลล์รูป: padding น้อยลงให้พื้นที่รูปเยอะขึ้น */
-:host ::ng-deep .tabulator .tabulator-row .tabulator-cell.cell-image {
-  padding: 5px !important;
-}
-
-/* หัวคอลัมน์จัดกลาง */
-:host ::ng-deep .tabulator .tabulator-header .tabulator-col .tabulator-col-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center !important;
-}
-
-/* กล่องรูป (กำหนดความสูงใน TS แล้ว) */
-:host ::ng-deep .img-wrap {
-  width: 100%;
-  height: 100%;
+.grid-wrap {
   overflow: hidden;
-  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.9);
 }
 
-/* ให้ tableholder เลื่อนแนวตั้งได้ */
-:host ::ng-deep .tabulator .tabulator-tableholder {
-  overflow-y: auto;
+/* ปุ่ม state */
+.btn-primary-enhance {
+  @apply px-4 py-2 rounded-full text-white font-semibold;
+  background: linear-gradient(to right, #4f46e5, #06b6d4);
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.35);
 }
-
 .btn-disabled {
-  @apply bg-slate-300 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed opacity-70;
+  @apply px-4 py-2 rounded-full font-semibold cursor-not-allowed;
+  background: #e5e7eb;
+  color: #9ca3af;
 }
 
+/* ลิงก์ action ด้านล่าง */
+.link {
+  color: #2563eb;
+  cursor: pointer;
+}
+.link-danger {
+  color: #ef4444;
+}
 
+/* Tabulator wrapper */
+.tab-root .tabulator {
+  border: none;
+  font-size: 13px;
+}
+.tab-root .tabulator-header {
+  background: #f9fafb;
+}
+.tab-root .tabulator-col {
+  border-right: 1px solid #e5e7eb;
+}
+.tab-root .tabulator-row {
+  border-bottom: 1px solid #eef2ff;
+}
+
+/* image cell */
+.cell-image .img-wrap {
+  position: relative;
+}
+.cell-image .img-wrap img {
+  display: block;
+}
+.cell-image .img-tools button {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+.cell-image .img-wrap:hover .img-tools button {
+  opacity: 1;
+  transform: translateY(0);
+}
+.cell-image .img-tools button {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Dialog base (ถ้าไม่ได้ใช้ Tailwind ที่อื่น) สามารถปรับเพิ่มได้ตามดีไซน์คุณ */
