@@ -186,7 +186,7 @@ export class FavoriteProjects implements OnInit, OnDestroy {
   // ===== Card actions =====
 
   onOpenProject(p: FavoriteProject) {
-    this.router.navigate(['/project', p.projectId]);
+    this.router.navigate(['/projects', p.projectId]);
   }
 
   onTogglePin(p: FavoriteProject, ev: MouseEvent) {

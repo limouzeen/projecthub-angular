@@ -1,5 +1,5 @@
 import { Component, signal , OnInit, OnDestroy} from '@angular/core';
-import { CommonModule, NgClass } from '@angular/common';
+import { CommonModule, Location, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FooterStateService } from '../../core/footer-state.service';
 
@@ -28,7 +28,7 @@ export class About implements OnInit, OnDestroy {
 
      //  constructor
   constructor(
-    private footer: FooterStateService
+    private footer: FooterStateService,private location: Location
   ) {}
    //  ตั้ง threshold เฉพาะหน้า Login: ย่อเมื่อสูง < 719px
   ngOnInit(): void {
@@ -41,7 +41,10 @@ export class About implements OnInit, OnDestroy {
     this.footer.resetAll();
   }
 
-
+// ----- UI helpers -----
+  onBack() {
+    this.location.back();
+  }
 
 
   members = signal<Member[]>([
