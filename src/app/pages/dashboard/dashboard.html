@@ -248,6 +248,22 @@
         </svg>
         Favorite Project
       </a>
+
+      <a routerLink="/guide" class="menu-item">
+        <svg
+          class="w-5 h-5 text-cyan-500"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          viewBox="0 0 24 24"
+        >
+          <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+          <path d="M4 4h16v13H6.5A2.5 2.5 0 004 19.5z" />
+        </svg>
+        Guidelines
+      </a>
     </nav>
 
     <!-- Footer of the drawer -->
@@ -418,14 +434,12 @@
   </div>
 
   <!-- ============ New Project Dialog ============ -->
-@if (newProjectDlgOpen()) {
+  @if (newProjectDlgOpen()) {
   <div class="ph-tdlg-backdrop" (click)="closeNewProjectDialog()">
     <div class="ph-tdlg-wrap" (click)="$event.stopPropagation()">
       <div class="ph-tdlg-card">
         <h2 class="ph-tdlg-title">Create new project</h2>
-        <p class="ph-tdlg-sub">
-          ตั้งชื่อโปรเจกต์ใหม่ของคุณ เพื่อเริ่มจัดการตารางและข้อมูลได้ทันที
-        </p>
+        <p class="ph-tdlg-sub">ตั้งชื่อโปรเจกต์ใหม่ของคุณ เพื่อเริ่มจัดการตารางและข้อมูลได้ทันที</p>
 
         <div class="ph-tdlg-input-wrap">
           <label class="ph-tdlg-label">Project name</label>
@@ -439,34 +453,30 @@
         </div>
 
         <div class="ph-tdlg-actions">
-          <button
-            type="button"
-            class="ph-btn ph-btn-ghost"
-            (click)="closeNewProjectDialog()">
+          <button type="button" class="ph-btn ph-btn-ghost" (click)="closeNewProjectDialog()">
             Cancel
           </button>
           <button
             type="button"
             class="ph-btn ph-btn-primary"
             [disabled]="!newProjectName().trim()"
-            (click)="confirmCreateProject()">
+            (click)="confirmCreateProject()"
+          >
             Create
           </button>
         </div>
       </div>
     </div>
   </div>
-}
+  }
 
-<!-- ============ Rename Project Dialog ============ -->
-@if (renameDlgOpen()) {
+  <!-- ============ Rename Project Dialog ============ -->
+  @if (renameDlgOpen()) {
   <div class="ph-tdlg-backdrop" (click)="closeRenameDialog()">
     <div class="ph-tdlg-wrap" (click)="$event.stopPropagation()">
       <div class="ph-tdlg-card">
         <h2 class="ph-tdlg-title">Rename project</h2>
-        <p class="ph-tdlg-sub">
-          เปลี่ยนชื่อโปรเจกต์เพื่อให้สื่อความหมายและค้นหาได้ง่ายขึ้น
-        </p>
+        <p class="ph-tdlg-sub">เปลี่ยนชื่อโปรเจกต์เพื่อให้สื่อความหมายและค้นหาได้ง่ายขึ้น</p>
 
         <div class="ph-tdlg-input-wrap">
           <label class="ph-tdlg-label">Project name</label>
@@ -480,27 +490,25 @@
         </div>
 
         <div class="ph-tdlg-actions">
-          <button
-            type="button"
-            class="ph-btn ph-btn-ghost"
-            (click)="closeRenameDialog()">
+          <button type="button" class="ph-btn ph-btn-ghost" (click)="closeRenameDialog()">
             Cancel
           </button>
           <button
             type="button"
             class="ph-btn ph-btn-primary"
             [disabled]="!renameProjectName().trim()"
-            (click)="confirmRenameProject()">
+            (click)="confirmRenameProject()"
+          >
             Save
           </button>
         </div>
       </div>
     </div>
   </div>
-}
+  }
 
-<!-- ============ Delete Project Dialog ============ -->
-@if (deleteDlgOpen()) {
+  <!-- ============ Delete Project Dialog ============ -->
+  @if (deleteDlgOpen()) {
   <div class="ph-tdlg-backdrop" (click)="closeDeleteDialog()">
     <div class="ph-tdlg-wrap" (click)="$event.stopPropagation()">
       <div class="ph-tdlg-card ph-tdlg-danger">
@@ -512,22 +520,15 @@
         </p>
 
         <div class="ph-tdlg-actions">
-          <button
-            type="button"
-            class="ph-btn ph-btn-ghost"
-            (click)="closeDeleteDialog()">
+          <button type="button" class="ph-btn ph-btn-ghost" (click)="closeDeleteDialog()">
             Cancel
           </button>
-          <button
-            type="button"
-            class="ph-btn ph-btn-danger"
-            (click)="confirmDeleteProject()">
+          <button type="button" class="ph-btn ph-btn-danger" (click)="confirmDeleteProject()">
             Delete
           </button>
         </div>
       </div>
     </div>
   </div>
-}
-
+  }
 </section>

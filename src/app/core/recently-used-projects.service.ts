@@ -35,9 +35,82 @@ export class RecentlyUsedProjectsService {
 
   /** ดึงรายการ recently used (mock: delay ให้ฟีล API) */
   getRecentlyUsed(): Observable<RecentlyUsedProject[]> {
-    const list = this.load();
-    return of(list).pipe(delay(120));
-  }
+  const mock: RecentlyUsedProject[] = [
+    {
+      projectId: 1,
+      name: 'Sales Analytics',
+      tables: 8,
+      lastOpened: '2025-11-12T10:45:00Z',
+      openCount: 18,
+    },
+    {
+      projectId: 1002,
+      name: 'Marketing Campaign 2025',
+      tables: 15,
+      lastOpened: '2025-11-12T09:20:00Z',
+      openCount: 25,
+    },
+    {
+      projectId: 2001,
+      name: 'Inventory Management',
+      tables: 10,
+      lastOpened: '2025-11-11T21:05:00Z',
+      openCount: 12,
+    },
+    {
+      projectId: 2002,
+      name: 'Customer Data Platform',
+      tables: 9,
+      lastOpened: '2025-11-11T16:30:00Z',
+      openCount: 7,
+    },
+    {
+      projectId: 2003,
+      name: 'HR Employee Records',
+      tables: 6,
+      lastOpened: '2025-11-11T08:50:00Z',
+      openCount: 5,
+    },
+    {
+      projectId: 2004,
+      name: 'E-commerce Orders Tracker',
+      tables: 11,
+      lastOpened: '2025-11-10T19:40:00Z',
+      openCount: 14,
+    },
+    {
+      projectId: 2005,
+      name: 'Support Ticket Insights',
+      tables: 7,
+      lastOpened: '2025-11-10T14:10:00Z',
+      openCount: 9,
+    },
+    {
+      projectId: 2006,
+      name: 'Finance Dashboard',
+      tables: 5,
+      lastOpened: '2025-11-09T23:15:00Z',
+      openCount: 6,
+    },
+    {
+      projectId: 2007,
+      name: 'Branch Performance',
+      tables: 4,
+      lastOpened: '2025-11-09T10:05:00Z',
+      openCount: 3,
+    },
+    {
+      projectId: 2008,
+      name: 'Product Feedback Hub',
+      tables: 6,
+      lastOpened: '2025-11-08T18:25:00Z',
+      openCount: 4,
+    },
+  ];
+
+  return of(mock).pipe(delay(160));
+}
+
 
   /** เรียกทุกครั้งที่ user เข้าโปรเจกต์ */
   markOpened(projectId: number, name: string, tables: number) {
