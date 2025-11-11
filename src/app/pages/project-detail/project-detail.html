@@ -284,4 +284,86 @@
     (close)="dialogOpen.set(false)"
     (submit)="onCreateTable($event)">
   </app-create-table-dialog>
+
+
+
+  <!-- Create Table Dialog -->
+<app-create-table-dialog
+  [open]="dialogOpen()"
+  (close)="dialogOpen.set(false)"
+  (submit)="onCreateTable($event)">
+</app-create-table-dialog>
+
+<!-- ================= Rename Table Dialog ================= -->
+@if (renameDlgOpen()) {
+  <div class="ph-tdlg-backdrop" (click)="closeRenameDialog()">
+    <div class="ph-tdlg-wrap" (click)="$event.stopPropagation()">
+      <div class="ph-tdlg-card">
+        <h2 class="ph-tdlg-title">Rename table</h2>
+        <p class="ph-tdlg-sub">
+          ตั้งชื่อใหม่ให้ตารางของคุณ ช่วยให้อ่านง่ายและค้นหาได้สะดวกขึ้น
+        </p>
+
+        <div class="ph-tdlg-input-wrap">
+          <label class="ph-tdlg-label">Table name</label>
+          <input
+            class="ph-tdlg-input"
+            [value]="renameName()"
+            (input)="renameName.set($any($event.target).value)"
+            maxlength="100"
+            autofocus />
+        </div>
+
+        <div class="ph-tdlg-actions">
+          <button
+            type="button"
+            class="ph-btn ph-btn-ghost"
+            (click)="closeRenameDialog()">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="ph-btn ph-btn-primary"
+            [disabled]="!renameName().trim() || !!renamingId()"
+            (click)="confirmRenameTable()">
+            @if (renamingId()) {Saving...} @else {Save}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================= Delete Table Dialog ================= -->
+@if (deleteDlgOpen()) {
+  <div class="ph-tdlg-backdrop" (click)="closeDeleteDialog()">
+    <div class="ph-tdlg-wrap" (click)="$event.stopPropagation()">
+      <div class="ph-tdlg-card ph-tdlg-danger">
+        <h2 class="ph-tdlg-title">Delete table</h2>
+        <p class="ph-tdlg-sub">
+          คุณต้องการลบตาราง
+          <strong>{{ targetTable()?.name }}</strong>
+          ใช่หรือไม่? การลบนี้อาจทำให้ข้อมูลที่เกี่ยวข้องสูญหายถาวร
+        </p>
+
+        <div class="ph-tdlg-actions">
+          <button
+            type="button"
+            class="ph-btn ph-btn-ghost"
+            (click)="closeDeleteDialog()">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="ph-btn ph-btn-danger"
+            [disabled]="!!deletingId()"
+            (click)="confirmDeleteTable()">
+            @if (deletingId()) {Deleting...} @else {Delete}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
 </section>
