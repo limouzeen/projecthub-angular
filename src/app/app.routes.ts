@@ -37,6 +37,7 @@ export const routes: Routes = [
 
 
 { path: 'table/:id', loadComponent: () => import('./pages/table-view/table-view').then(m => m.TableView) },
+{ path: 'recently-used', loadComponent: () => import('./pages/recently-used/recently-used').then(m => m.RecentlyUsedProjects) },
 
 
 
