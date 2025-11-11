@@ -22,6 +22,7 @@ export const routes: Routes = [
   loadComponent: () =>
     import('./pages/favorite-projects/favorite-projects').then(m => m.FavoriteProjects),
 },
+{ path: 'guide', loadComponent: () => import('./pages/guide/guide').then(m => m.Guide) },
 
   { path: 'about', loadComponent: () => import('./pages/about/about').then(m => m.About) },
   {

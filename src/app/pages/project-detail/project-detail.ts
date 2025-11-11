@@ -50,13 +50,15 @@ export class ProjectDetail implements OnInit {
   }
 
   async refresh() {
-    this.loading.set(true);
-    try {
-      this.tables.set(await firstValueFrom(this.api.listTables(this.projectId)));
-    } finally {
-      this.loading.set(false);
-    }
+  this.loading.set(true);
+  try {
+    this.tables.set(await firstValueFrom(this.api.listTables(this.projectId)));
+    this.normalizePage();
+  } finally {
+    this.loading.set(false);
   }
+}
+
 
   openCreateDialog() {
     this.dialogOpen.set(true);
@@ -161,5 +163,58 @@ export class ProjectDetail implements OnInit {
       if (typeof document !== 'undefined') document.body.style.overflow = '';
     }
   }
+
+
+  //===============Paging ========================
+  readonly page     = signal(1);
+readonly pageSize = 5;
+
+readonly totalPages = computed(() => {
+  const total = this.filtered().length;
+  return total > 0 ? Math.ceil(total / this.pageSize) : 1;
+});
+
+readonly paged = computed(() => {
+  const list = this.filtered();
+  const start = (this.page() - 1) * this.pageSize;
+  return list.slice(start, start + this.pageSize);
+});
+
+private normalizePage() {
+  const total = this.filtered().length;
+  const maxPage = total > 0 ? Math.ceil(total / this.pageSize) : 1;
+  if (this.page() > maxPage) {
+    this.page.set(maxPage);
+  }
+  if (this.page() < 1) {
+    this.page.set(1);
+  }
+}
+
+onSearch(value: string) {
+  this.q.set(value);
+  this.page.set(1);      // รีหน้าเมื่อ filter เปลี่ยน
+  this.normalizePage();
+}
+
+
+nextPage() {
+  if (this.page() < this.totalPages()) {
+    this.page.update(p => p + 1);
+  }
+}
+
+prevPage() {
+  if (this.page() > 1) {
+    this.page.update(p => p - 1);
+  }
+}
+
+
+onBackToDashboard() {
+  this.router.navigate(['/dashboard']);
+}
+
+
 
 }
