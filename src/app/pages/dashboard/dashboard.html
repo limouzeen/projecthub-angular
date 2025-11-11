@@ -145,7 +145,7 @@
   <div class="max-w-6xl mx-auto w-full px-4 pt-5 mb-1">
     <div class="flex items-center gap-2">
       <!-- New Project = ปุ่มหลักแบบ gradient -->
-      <button class="btn-primary-enhance" (click)="addQuick('New Project')">New Project</button>
+      <button class="btn-primary-enhance" (click)="openNewProjectDialog()">New Project</button>
 
       <!-- Delete Project = ปุ่มอ่อน โทน danger ให้เข้าธีม -->
       <button
@@ -302,7 +302,8 @@
           fill="currentColor"
           [attr.fill]="p.favorite ? 'currentColor' : 'none'"
           [attr.stroke]="p.favorite ? 'currentColor' : 'currentColor'"
-          [ngClass]="p.favorite ? 'text-gray-600' : 'text-slate-300'">
+          [ngClass]="p.favorite ? 'text-gray-600' : 'text-slate-300'"
+        >
           >
           <path
             d="M12 17.3l-6.2 3.3 1.2-6.7L2 8.9l6.9-1 3.1-6.2 3.1 6.2 6.9 1-5 5 1.2 6.7z"
@@ -415,4 +416,118 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ New Project Dialog ============ -->
+@if (newProjectDlgOpen()) {
+  <div class="ph-tdlg-backdrop" (click)="closeNewProjectDialog()">
+    <div class="ph-tdlg-wrap" (click)="$event.stopPropagation()">
+      <div class="ph-tdlg-card">
+        <h2 class="ph-tdlg-title">Create new project</h2>
+        <p class="ph-tdlg-sub">
+          ตั้งชื่อโปรเจกต์ใหม่ของคุณ เพื่อเริ่มจัดการตารางและข้อมูลได้ทันที
+        </p>
+
+        <div class="ph-tdlg-input-wrap">
+          <label class="ph-tdlg-label">Project name</label>
+          <input
+            class="ph-tdlg-input"
+            [value]="newProjectName()"
+            (input)="newProjectName.set($any($event.target).value)"
+            maxlength="120"
+            autofocus
+          />
+        </div>
+
+        <div class="ph-tdlg-actions">
+          <button
+            type="button"
+            class="ph-btn ph-btn-ghost"
+            (click)="closeNewProjectDialog()">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="ph-btn ph-btn-primary"
+            [disabled]="!newProjectName().trim()"
+            (click)="confirmCreateProject()">
+            Create
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ============ Rename Project Dialog ============ -->
+@if (renameDlgOpen()) {
+  <div class="ph-tdlg-backdrop" (click)="closeRenameDialog()">
+    <div class="ph-tdlg-wrap" (click)="$event.stopPropagation()">
+      <div class="ph-tdlg-card">
+        <h2 class="ph-tdlg-title">Rename project</h2>
+        <p class="ph-tdlg-sub">
+          เปลี่ยนชื่อโปรเจกต์เพื่อให้สื่อความหมายและค้นหาได้ง่ายขึ้น
+        </p>
+
+        <div class="ph-tdlg-input-wrap">
+          <label class="ph-tdlg-label">Project name</label>
+          <input
+            class="ph-tdlg-input"
+            [value]="renameProjectName()"
+            (input)="renameProjectName.set($any($event.target).value)"
+            maxlength="120"
+            autofocus
+          />
+        </div>
+
+        <div class="ph-tdlg-actions">
+          <button
+            type="button"
+            class="ph-btn ph-btn-ghost"
+            (click)="closeRenameDialog()">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="ph-btn ph-btn-primary"
+            [disabled]="!renameProjectName().trim()"
+            (click)="confirmRenameProject()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ============ Delete Project Dialog ============ -->
+@if (deleteDlgOpen()) {
+  <div class="ph-tdlg-backdrop" (click)="closeDeleteDialog()">
+    <div class="ph-tdlg-wrap" (click)="$event.stopPropagation()">
+      <div class="ph-tdlg-card ph-tdlg-danger">
+        <h2 class="ph-tdlg-title">Delete project</h2>
+        <p class="ph-tdlg-sub">
+          ต้องการลบโปรเจกต์
+          <strong>{{ deleteProjectName() }}</strong>
+          ใช่หรือไม่? การลบนี้อาจทำให้ข้อมูลที่เกี่ยวข้องหายไปถาวร
+        </p>
+
+        <div class="ph-tdlg-actions">
+          <button
+            type="button"
+            class="ph-btn ph-btn-ghost"
+            (click)="closeDeleteDialog()">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="ph-btn ph-btn-danger"
+            (click)="confirmDeleteProject()">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
 </section>

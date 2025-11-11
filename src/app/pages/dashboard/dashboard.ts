@@ -1,6 +1,13 @@
 import {
-  Component, effect, signal, computed, HostListener, ViewChild,
-  ElementRef, AfterViewInit, OnDestroy
+  Component,
+  effect,
+  signal,
+  computed,
+  HostListener,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  OnDestroy,
 } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { DatePipe, NgClass, CommonModule } from '@angular/common';
@@ -22,6 +29,9 @@ export class Dashboard implements AfterViewInit, OnDestroy {
     const pill = document.querySelector<HTMLElement>('.footer-pill');
     if (!pager || !pill) return;
 
+
+   
+
     const vpH = window.innerHeight;
     const pr = pager.getBoundingClientRect();
     const pillH = pill.offsetHeight || 48;
@@ -30,7 +40,7 @@ export class Dashboard implements AfterViewInit, OnDestroy {
     const pillBottom = pillTop + pillH;
 
     const pagerInViewport = pr.bottom > 0 && pr.top < vpH;
-    const overlap = pagerInViewport ? (pillTop < pr.bottom) && (pillBottom > pr.top) : false;
+    const overlap = pagerInViewport ? pillTop < pr.bottom && pillBottom > pr.top : false;
 
     this.footer.setForceCompact(overlap ? true : null);
   }
@@ -40,6 +50,21 @@ export class Dashboard implements AfterViewInit, OnDestroy {
     this.updateFooterAvoidOverlap();
     this.pageSize.set(this.calcPageSize(window.innerHeight));
   };
+
+
+   // ============== Dialog ==============
+    newProjectDlgOpen = signal(false);
+    newProjectName = signal('');
+
+    renameDlgOpen = signal(false);
+    renameProjectId = signal<number | null>(null);
+    renameProjectName = signal('');
+
+    deleteDlgOpen = signal(false);
+    deleteProjectId = signal<number | null>(null);
+    deleteProjectName = signal('');
+
+    // =================================================
 
   ngAfterViewInit() {
     this.footer.setThreshold(720);
@@ -69,11 +94,15 @@ export class Dashboard implements AfterViewInit, OnDestroy {
   filtered = computed(() => {
     const q = this.keyword().trim().toLowerCase();
     const list = this.projects();
-    return q ? list.filter(p => p.name.toLowerCase().includes(q)) : list;
+    return q ? list.filter((p) => p.name.toLowerCase().includes(q)) : list;
   });
 
-  private calcPageSize(h: number): number { return h < 800 ? 5 : 8; }
-  pageSize = signal<number>(typeof window !== 'undefined' ? this.calcPageSize(window.innerHeight) : 8);
+  private calcPageSize(h: number): number {
+    return h < 800 ? 5 : 8;
+  }
+  pageSize = signal<number>(
+    typeof window !== 'undefined' ? this.calcPageSize(window.innerHeight) : 8
+  );
 
   pageIndex = signal(0);
   pageCount = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize())));
@@ -84,27 +113,32 @@ export class Dashboard implements AfterViewInit, OnDestroy {
   });
 
   constructor(
-  private svc: ProjectsService,
-  private router: Router,
-  private footer: FooterStateService
-) {
-  // sync รายการจาก service ตามเดิม
-  effect(() => this.projects.set(this.svc.list()), { allowSignalWrites: true });
+    private svc: ProjectsService,
+    private router: Router,
+    private footer: FooterStateService
+  ) {
+    // sync รายการจาก service ตามเดิม
+    effect(() => this.projects.set(this.svc.list()), { allowSignalWrites: true });
 
-  //  รีเซ็ตหน้าเฉพาะเมื่อเงื่อนไขการค้นหา/ขนาดหน้าเปลี่ยน
-  effect(() => {
-    const _q = this.keyword();     // ผูกกับ keyword
-    const _s = this.pageSize();    // ผูกกับ pageSize
-    this.pageIndex.set(0);
-  }, { allowSignalWrites: true });
+    //  รีเซ็ตหน้าเฉพาะเมื่อเงื่อนไขการค้นหา/ขนาดหน้าเปลี่ยน
+    effect(
+      () => {
+        const _q = this.keyword(); // ผูกกับ keyword
+        const _s = this.pageSize(); // ผูกกับ pageSize
+        this.pageIndex.set(0);
+      },
+      { allowSignalWrites: true }
+    );
 
-  // (เสริม) ถ้าจำนวนหน้าลดลง ให้ clamp หน้าไม่ให้เกิน
-  effect(() => {
-    const pc = this.pageCount();
-    if (this.pageIndex() >= pc) this.pageIndex.set(pc - 1);
-  }, { allowSignalWrites: true });
-}
-
+    // (เสริม) ถ้าจำนวนหน้าลดลง ให้ clamp หน้าไม่ให้เกิน
+    effect(
+      () => {
+        const pc = this.pageCount();
+        if (this.pageIndex() >= pc) this.pageIndex.set(pc - 1);
+      },
+      { allowSignalWrites: true }
+    );
+  }
 
   toggleAside() {
     const next = !this.asideOpen();
@@ -116,60 +150,196 @@ export class Dashboard implements AfterViewInit, OnDestroy {
     if (this.menuOpenId() !== null) this.menuOpenId.set(null);
     if (this.profileOpen()) this.profileOpen.set(false);
   }
-  @HostListener('document:keydown.escape') onEsc() {
-    if (this.profileOpen()) { this.profileOpen.set(false); return; }
-    if (this.menuOpenId() !== null) { this.menuOpenId.set(null); return; }
-    if (this.asideOpen()) {
-      this.asideOpen.set(false);
-      if (typeof document !== 'undefined') document.body.style.overflow = '';
-    }
-  }
+  // @HostListener('document:keydown.escape') onEsc() {
+  //   if (this.profileOpen()) {
+  //     this.profileOpen.set(false);
+  //     return;
+  //   }
+  //   if (this.menuOpenId() !== null) {
+  //     this.menuOpenId.set(null);
+  //     return;
+  //   }
+  //   if (this.asideOpen()) {
+  //     this.asideOpen.set(false);
+  //     if (typeof document !== 'undefined') document.body.style.overflow = '';
+  //   }
+  // }
 
-  toggleMenu(id: number) { this.menuOpenId.update(cur => (cur === id ? null : id)); }
-  closeMenu() { this.menuOpenId.set(null); }
-  openProject(id: number) {
-  this.router.navigate(['/projects', id]); 
-  this.closeMenu();
+
+  //=============  Close Dialog ================================
+
+
+  @HostListener('document:keydown.escape')
+onEsc() {
+  if (this.newProjectDlgOpen()) { this.closeNewProjectDialog(); return; }
+  if (this.renameDlgOpen())    { this.closeRenameDialog(); return; }
+  if (this.deleteDlgOpen())    { this.closeDeleteDialog(); return; }
+
+  if (this.profileOpen()) { this.profileOpen.set(false); return; }
+  if (this.menuOpenId() !== null) { this.menuOpenId.set(null); return; }
+
+  if (this.asideOpen()) {
+    this.asideOpen.set(false);
+    if (typeof document !== 'undefined') document.body.style.overflow = '';
+  }
 }
-  renameProject(id: number, currentName: string){
-    const next = window.prompt('Rename project:', currentName?.trim() ?? '');
-    if (next != null) {
-      const name = next.trim();
-      if (name && name !== currentName) this.svc.rename(id, name);
-    }
+
+//=============================================================
+
+  toggleMenu(id: number) {
+    this.menuOpenId.update((cur) => (cur === id ? null : id));
+  }
+  closeMenu() {
+    this.menuOpenId.set(null);
+  }
+  openProject(id: number) {
+    this.router.navigate(['/projects', id]);
     this.closeMenu();
   }
+  // renameProject(id: number, currentName: string) {
+  //   const next = window.prompt('Rename project:', currentName?.trim() ?? '');
+  //   if (next != null) {
+  //     const name = next.trim();
+  //     if (name && name !== currentName) this.svc.rename(id, name);
+  //   }
+  //   this.closeMenu();
+  // }
+
+  //================= Dialog ===========================================
+  renameProject(id: number, currentName: string) {
+  this.closeMenu();
+  this.renameProjectId.set(id);
+  this.renameProjectName.set(currentName);
+  this.renameDlgOpen.set(true);
+}
+
+closeRenameDialog() {
+  this.renameDlgOpen.set(false);
+  this.renameProjectId.set(null);
+  this.renameProjectName.set('');
+}
+
+confirmRenameProject() {
+  const id = this.renameProjectId();
+  const name = this.renameProjectName().trim();
+  if (!id || !name) {
+    this.closeRenameDialog();
+    return;
+  }
+  this.svc.rename(id, name);
+  this.closeRenameDialog();
+}
+
+//=====================================================
 
   toggleProfileMenu() {
     if (this.menuOpenId() !== null) this.menuOpenId.set(null);
-    this.profileOpen.update(v => !v);
+    this.profileOpen.update((v) => !v);
   }
-  onEditProfile() { this.router.navigateByUrl('/profile/edit'); }
-  onLogout() { this.router.navigateByUrl('/login'); }
+  onEditProfile() {
+    this.router.navigateByUrl('/profile/edit');
+  }
+  onLogout() {
+    this.router.navigateByUrl('/login');
+  }
 
-  addQuick(name: string) {
-    if (!name.trim()) return;
-    this.svc.add(name.trim());
-    this.keyword.set('');
+  // addQuick(name: string) {
+  //   if (!name.trim()) return;
+  //   this.svc.add(name.trim());
+  //   this.keyword.set('');
+  // }
+  isChecked(id: number) {
+    return this.selected().has(id);
   }
-  isChecked(id: number) { return this.selected().has(id); }
-  toggleCheck(id: number, checked: boolean)  {
-    this.selected.update(s => {
+  toggleCheck(id: number, checked: boolean) {
+    this.selected.update((s) => {
       const next = new Set(s);
       checked ? next.add(id) : next.delete(id);
       return next;
     });
   }
-  removeOne(id: number) { this.svc.remove(id); }
+  // removeOne(id: number) {
+  //   this.svc.remove(id);
+  // }
+
+  //======================================================
+
+  removeOne(id: number) {
+  const p = this.projects().find(x => x.id === id);
+  if (!p) return;
+  this.closeMenu();
+  this.deleteProjectId.set(id);
+  this.deleteProjectName.set(p.name);
+  this.deleteDlgOpen.set(true);
+}
+
+closeDeleteDialog() {
+  this.deleteDlgOpen.set(false);
+  this.deleteProjectId.set(null);
+  this.deleteProjectName.set('');
+}
+
+confirmDeleteProject() {
+  const id = this.deleteProjectId();
+  if (!id) {
+    this.closeDeleteDialog();
+    return;
+  }
+  this.svc.remove(id);
+  this.closeDeleteDialog();
+}
+
+// ========================================================
+
   removeManySelected() {
     const ids = Array.from(this.selected());
     if (ids.length) this.svc.removeMany(ids);
     this.selected.set(new Set());
   }
-  toggleFavorite(id: number) { this.svc.toggleFavorite(id); }
-  exportCSV() { this.svc.downloadCSV(this.filtered()); }
+  toggleFavorite(id: number) {
+    this.svc.toggleFavorite(id);
+  }
+  exportCSV() {
+    this.svc.downloadCSV(this.filtered());
+  }
 
-  gotoPage(n: number) { if (n >= 0 && n < this.pageCount()) this.pageIndex.set(n); }
-  nextPage() { const n = this.pageIndex() + 1; if (n < this.pageCount()) this.pageIndex.set(n); }
-  prevPage() { const n = this.pageIndex() - 1; if (n >= 0) this.pageIndex.set(n); }
+  gotoPage(n: number) {
+    if (n >= 0 && n < this.pageCount()) this.pageIndex.set(n);
+  }
+  nextPage() {
+    const n = this.pageIndex() + 1;
+    if (n < this.pageCount()) this.pageIndex.set(n);
+  }
+  prevPage() {
+    const n = this.pageIndex() - 1;
+    if (n >= 0) this.pageIndex.set(n);
+  }
+
+
+
+  // ================ Method Dialog =====================
+  openNewProjectDialog() {
+  this.closeMenu();
+  this.newProjectName.set('');
+  this.newProjectDlgOpen.set(true);
+}
+
+closeNewProjectDialog() {
+  this.newProjectDlgOpen.set(false);
+  this.newProjectName.set('');
+}
+
+confirmCreateProject() {
+  const name = this.newProjectName().trim();
+  if (!name) {
+    this.closeNewProjectDialog();
+    return;
+  }
+  this.svc.add(name);
+  this.keyword.set('');
+  this.closeNewProjectDialog();
+}
+
+// ========================================================
+
 }
